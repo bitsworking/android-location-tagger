@@ -1,19 +1,18 @@
-package com.bitsworking.mylocations;
+package com.bitsworking.starlocations;
 
 import android.app.Activity;
 
 import android.app.ActionBar;
 import android.app.FragmentManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
 
-import com.bitsworking.mylocations.fragments.InfoFragment;
-import com.bitsworking.mylocations.fragments.ListFragment;
-import com.bitsworking.mylocations.fragments.MapFragment;
-import com.bitsworking.mylocations.fragments.NavigationDrawerFragment;
+import com.bitsworking.starlocations.fragments.InfoFragment;
+import com.bitsworking.starlocations.fragments.ListFragment;
+import com.bitsworking.starlocations.fragments.MapFragment;
+import com.bitsworking.starlocations.fragments.NavigationDrawerFragment;
 
 
 public class MainActivity extends Activity
@@ -24,24 +23,27 @@ public class MainActivity extends Activity
     private NavigationDrawerFragment mNavigationDrawerFragment;
 
     /**
-     * Used to store the last screen title. For use in {@link #restoreActionBar()}.
+     * Content fragments
      */
-    private CharSequence mTitle;
-
     private MapFragment mMapFragment = new MapFragment();
     private ListFragment mListFragment = new ListFragment();
     private InfoFragment mInfoFragment = new InfoFragment();
+
+    /**
+     * Used to store the last screen title. For use in {@link #restoreActionBar()}.
+     */
+    private CharSequence mTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mNavigationDrawerFragment = (NavigationDrawerFragment)
-                getFragmentManager().findFragmentById(R.id.navigation_drawer);
         mTitle = getTitle();
 
-        // Set up the drawer.
+        // Setup Navigation Drawer
+        mNavigationDrawerFragment = (NavigationDrawerFragment)
+                getFragmentManager().findFragmentById(R.id.navigation_drawer);
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
@@ -67,6 +69,7 @@ public class MainActivity extends Activity
     }
 
     public void onSectionAttached(int number) {
+        // callback when a fragment section has been attached
         switch (number) {
             case POS_MAP:
                 mTitle = getString(R.string.title_section1);

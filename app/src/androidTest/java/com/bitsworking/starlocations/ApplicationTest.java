@@ -1,4 +1,4 @@
-package com.bitsworking.mylocations;
+package com.bitsworking.starlocations;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

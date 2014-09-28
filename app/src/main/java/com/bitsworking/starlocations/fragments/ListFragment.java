@@ -1,4 +1,4 @@
-package com.bitsworking.mylocations.fragments;
+package com.bitsworking.starlocations.fragments;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -7,9 +7,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.bitsworking.mylocations.Constants;
-import com.bitsworking.mylocations.MainActivity;
-import com.bitsworking.mylocations.R;
+import com.bitsworking.starlocations.Constants;
+import com.bitsworking.starlocations.MainActivity;
+import com.bitsworking.starlocations.R;
 
 /**
  * The List Fragment

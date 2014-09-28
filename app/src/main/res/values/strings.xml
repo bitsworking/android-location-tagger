@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">My Locations</string>
+    <string name="app_name">Star Locations</string>
     <string name="title_section1">Map</string>
     <string name="title_section2">List</string>
     <string name="title_section3">abc??</string>

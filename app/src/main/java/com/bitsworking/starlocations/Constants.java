@@ -1,4 +1,4 @@
-package com.bitsworking.mylocations;
+package com.bitsworking.starlocations;
 
 public interface Constants {
     static final int POS_MAP = 0;
