@@ -2,6 +2,7 @@ package com.bitsworking.starlocations.fragments;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,5 +30,9 @@ public class MapFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         ((MainActivity) activity).onSectionAttached(Constants.POS_MAP);
+    }
+
+    public void updateLocation(Location location) {
+
     }
 }

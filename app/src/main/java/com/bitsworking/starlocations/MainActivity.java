@@ -12,7 +12,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
-import android.widget.Toast;
 
 import com.bitsworking.starlocations.fragments.InfoFragment;
 import com.bitsworking.starlocations.fragments.ListFragment;
@@ -43,6 +42,8 @@ public class MainActivity extends Activity
 
     private Location mLastKnownLocation;
     private LocationManager mLocationManager;
+
+    private int section_attached = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +98,7 @@ public class MainActivity extends Activity
 
     public void onSectionAttached(int number) {
         // callback when a fragment section has been attached
+        section_attached = number;
         switch (number) {
             case POS_MAP:
                 mTitle = getString(R.string.title_section1);
@@ -140,7 +142,7 @@ public class MainActivity extends Activity
         if (id == R.id.action_settings) {
             return true;
         } else if (item.getItemId() == R.id.action_location_current) {
-            Toast.makeText(this, getLocation().toString(), Toast.LENGTH_SHORT).show();
+            makeUseOfNewLocation();
             return true;
         }
 
@@ -170,6 +172,19 @@ public class MainActivity extends Activity
             return mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         } else {
             return mLastKnownLocation;
+        }
+    }
+
+    private void makeUseOfNewLocation() {
+        // Update ui and code on new location
+        Location location = getLocation();
+        Log.v(TAG, "last location: " + getLocation().toString());
+        if (section_attached == POS_MAP) {
+            mMapFragment.updateLocation(location);
+        } else if (section_attached == POS_LIST) {
+//            Toast.makeText(this, getLocation().toString(), Toast.LENGTH_SHORT).show();
+        } else if (section_attached == POS_INFO) {
+            mInfoFragment.updateLocation(location);
         }
     }
 }
