@@ -1,4 +1,4 @@
-package com.bitsworking.mylocations;
+package com.bitsworking.mylocations.fragments;
 
 
 import android.app.Activity;
@@ -21,6 +21,8 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.bitsworking.mylocations.R;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
