@@ -4,10 +4,10 @@
     <string name="app_name">Star Locations</string>
     <string name="title_section1">Map</string>
     <string name="title_section2">List</string>
-    <string name="title_section3">abc??</string>
+    <string name="title_section3">Info</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="action_example">Example action</string>
+    <string name="action_location_current">Now</string>
     <string name="action_settings">Settings</string>
 
 </resources>

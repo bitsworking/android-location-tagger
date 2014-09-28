@@ -4,10 +4,15 @@ import android.app.Activity;
 
 import android.app.ActionBar;
 import android.app.FragmentManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
+import android.widget.Toast;
 
 import com.bitsworking.starlocations.fragments.InfoFragment;
 import com.bitsworking.starlocations.fragments.ListFragment;
@@ -17,6 +22,8 @@ import com.bitsworking.starlocations.fragments.NavigationDrawerFragment;
 
 public class MainActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, Constants {
+    private final String TAG = "MainActivity";
+
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
@@ -34,6 +41,9 @@ public class MainActivity extends Activity
      */
     private CharSequence mTitle;
 
+    private Location mLastKnownLocation;
+    private LocationManager mLocationManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,7 +57,13 @@ public class MainActivity extends Activity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
+
+        setupLocationManager();
     }
+
+    // TODO:
+    // onPause: locationManager.removeUpdates(locationListener);
+    // onResume: request Updates
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
@@ -112,9 +128,50 @@ public class MainActivity extends Activity
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             return true;
+        } else if (item.getItemId() == R.id.action_location_current) {
+            Toast.makeText(this, getLocation().toString(), Toast.LENGTH_SHORT).show();
+            return true;
         }
+
         return super.onOptionsItemSelected(item);
     }
 
+    // Define a listener that responds to location updates
+    LocationListener locationListener = new LocationListener() {
+        public void onLocationChanged(Location location) {
+            // Called when a new location is found by the network location provider.
+            if (Tools.isBetterLocation(location, mLastKnownLocation)) {
+                // Have a better, newer location!
+                makeUseOfNewLocation(location);
+            }
+        }
+
+        public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+        public void onProviderEnabled(String provider) {}
+
+        public void onProviderDisabled(String provider) {}
+    };
+
+    private void setupLocationManager() {
+        // Acquire a reference to the system Location Manager
+        mLocationManager = (LocationManager) getSystemService(Activity.LOCATION_SERVICE);
+
+        // Register the listener with the Location Manager to receive location updates
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+    }
+
+    public Location getLocation() {
+        if (mLastKnownLocation == null) {
+            return mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        } else {
+            return mLastKnownLocation;
+        }
+    }
+
+    private void makeUseOfNewLocation(Location location) {
+        Log.v(TAG, "new good location: " + location.toString());
+        mLastKnownLocation = location;
+    }
 
 }
