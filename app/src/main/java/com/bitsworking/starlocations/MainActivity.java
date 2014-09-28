@@ -58,12 +58,23 @@ public class MainActivity extends Activity
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
 
-        setupLocationManager();
+        // Acquire a reference to the system Location Manager
+        mLocationManager = (LocationManager) getSystemService(Activity.LOCATION_SERVICE);
     }
 
-    // TODO:
-    // onPause: locationManager.removeUpdates(locationListener);
-    // onResume: request Updates
+    @Override
+    public void onResume() {
+        super.onResume();  // Always call the superclass method first
+
+        // Register the listener with the Location Manager to receive location updates
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();  // Always call the superclass method first
+        mLocationManager.removeUpdates(locationListener);
+    }
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
@@ -142,7 +153,8 @@ public class MainActivity extends Activity
             // Called when a new location is found by the network location provider.
             if (Tools.isBetterLocation(location, mLastKnownLocation)) {
                 // Have a better, newer location!
-                makeUseOfNewLocation(location);
+                Log.v(TAG, "new good location: " + location.toString());
+                mLastKnownLocation = location;
             }
         }
 
@@ -153,14 +165,6 @@ public class MainActivity extends Activity
         public void onProviderDisabled(String provider) {}
     };
 
-    private void setupLocationManager() {
-        // Acquire a reference to the system Location Manager
-        mLocationManager = (LocationManager) getSystemService(Activity.LOCATION_SERVICE);
-
-        // Register the listener with the Location Manager to receive location updates
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-    }
-
     public Location getLocation() {
         if (mLastKnownLocation == null) {
             return mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -168,10 +172,4 @@ public class MainActivity extends Activity
             return mLastKnownLocation;
         }
     }
-
-    private void makeUseOfNewLocation(Location location) {
-        Log.v(TAG, "new good location: " + location.toString());
-        mLastKnownLocation = location;
-    }
-
 }
