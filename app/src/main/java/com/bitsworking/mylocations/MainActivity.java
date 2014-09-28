@@ -17,8 +17,7 @@ import com.bitsworking.mylocations.fragments.NavigationDrawerFragment;
 
 
 public class MainActivity extends Activity
-        implements NavigationDrawerFragment.NavigationDrawerCallbacks {
-
+        implements NavigationDrawerFragment.NavigationDrawerCallbacks, Constants {
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
@@ -28,10 +27,6 @@ public class MainActivity extends Activity
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
-
-    private final static int POS_MAP = 0;
-    private final static int POS_LIST = 1;
-    private final static int POS_INFO = 2;
 
     private MapFragment mMapFragment = new MapFragment();
     private ListFragment mListFragment = new ListFragment();
@@ -60,17 +55,28 @@ public class MainActivity extends Activity
             fragmentManager.beginTransaction()
                     .replace(R.id.container, mMapFragment)
                     .commit();
-            mTitle = getString(R.string.title_section1);
         } else if (position == POS_LIST) {
             fragmentManager.beginTransaction()
                     .replace(R.id.container, mListFragment)
                     .commit();
-            mTitle = getString(R.string.title_section2);
         } else if (position == POS_INFO) {
-            mTitle = getString(R.string.title_section3);
             fragmentManager.beginTransaction()
                     .replace(R.id.container, mInfoFragment)
                     .commit();
+        }
+    }
+
+    public void onSectionAttached(int number) {
+        switch (number) {
+            case POS_MAP:
+                mTitle = getString(R.string.title_section1);
+                break;
+            case POS_LIST:
+                mTitle = getString(R.string.title_section2);
+                break;
+            case POS_INFO:
+                mTitle = getString(R.string.title_section3);
+                break;
         }
     }
 

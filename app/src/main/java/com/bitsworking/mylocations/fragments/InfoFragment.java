@@ -7,18 +7,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.bitsworking.mylocations.Constants;
+import com.bitsworking.mylocations.MainActivity;
 import com.bitsworking.mylocations.R;
 
 /**
- * A placeholder fragment containing a simple view.
+ * The Info Fragment
  */
 public class InfoFragment extends Fragment {
-    /**
-     * The fragment argument representing the section number for this
-     * fragment.
-     */
-    private static final String ARG_SECTION_NUMBER = "section_number";
-
     public InfoFragment() {
     }
 
@@ -32,7 +28,6 @@ public class InfoFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-//            ((MainActivity) activity).onSectionAttached(
-//                    getArguments().getInt(ARG_SECTION_NUMBER));
+        ((MainActivity) activity).onSectionAttached(Constants.POS_INFO);
     }
 }
