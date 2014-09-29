@@ -4,13 +4,13 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.bitsworking.starlocations.Constants;
 import com.bitsworking.starlocations.LocationTag;
 import com.bitsworking.starlocations.MainActivity;
 import com.bitsworking.starlocations.R;
@@ -18,8 +18,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
-import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 /**
@@ -31,9 +31,11 @@ public class MapFragment extends Fragment {
     private MapView mMapView;
     private static GoogleMap mMap;
 
-    private Activity mActivity;
-
     private Location mLastKnownLocation;
+    private Handler mHandler = new Handler();
+
+    private Marker lastTempMarker;
+    private LatLng lastTempLatLng;
 
     public MapFragment() {
         setRetainInstance(true);
@@ -71,7 +73,6 @@ public class MapFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         Log.v(TAG, "onAttach");
-        mActivity = activity;
 //        ((MainActivity) activity).onSectionAttached(Constants.FRAGMENT_MAP);
     }
 
@@ -103,10 +104,10 @@ public class MapFragment extends Fragment {
     }
 
     private void setUpMap() {
-        final Location lastUnsafeLocation = ((MainActivity) getActivity()).getLocation();
+        mLastKnownLocation = ((MainActivity) getActivity()).getLocation();
 
         // Initial positining
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastUnsafeLocation.getLatitude(), lastUnsafeLocation.getLongitude()), 8.0f));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), 8.0f));
 
         // My location button overlay
         mMap.setMyLocationEnabled(true);
@@ -116,36 +117,55 @@ public class MapFragment extends Fragment {
             public boolean onMyLocationButtonClick() {
                 Log.v(TAG, "onMyLocationButtonCLick");
                 if (mLastKnownLocation == null) {
-                    if (lastUnsafeLocation == null) {
-                        Toast.makeText(getActivity(), "Waiting for location...", Toast.LENGTH_LONG).show();
-                        return false;
-                    } else {
-                        // Uncertain last known position
-                        Toast.makeText(getActivity(), "Found helper location...", Toast.LENGTH_LONG).show();
-                        mLastKnownLocation = lastUnsafeLocation;
-                    }
+                    Toast.makeText(getActivity(), "Waiting for location...", Toast.LENGTH_LONG).show();
+                    return false;
+//                    if (lastUnsafeLocation == null) {
+//                    } else {
+//                        // Uncertain last known position
+//                        Toast.makeText(getActivity(), "Found helper location...", Toast.LENGTH_LONG).show();
+//                        mLastKnownLocation = lastUnsafeLocation;
+//                    }
                 }
 
-                LatLng coords = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
-                LocationTag tag = LocationTag.fromCoordinates(getActivity(), coords);
-                handleSearchResult(tag);
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        LocationTag tag = LocationTag.fromCoordinates(getActivity(), new LatLng(
+                                mLastKnownLocation.getLatitude(),
+                                mLastKnownLocation.getLongitude()));
+                        handleSearchResult(tag);
+                    }
+                }).start();
+
                 return false;
             }
         });
     }
 
-    public void handleSearchResult(LocationTag location) {
+    public void handleSearchResult(final LocationTag location) {
         Log.v(TAG, "searching for " + location);
         if (location == null) {
             return;
         }
 
-        MarkerOptions markerOptions = new MarkerOptions()
-                .position(location.getCoordinates())
-                .title(location.getSearchParams().getQuery())
-                .snippet(location.getAddress().toString().replace(",", "\n"));
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                lastTempLatLng = location.getCoordinates();
 
-        mMap.addMarker(markerOptions);
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), 10.0f));
+                MarkerOptions lastTemporaryMarkerOptions = new MarkerOptions();
+                lastTemporaryMarkerOptions.position(lastTempLatLng);
+                lastTemporaryMarkerOptions.title(location.getSearchParams().getQuery());
+                lastTemporaryMarkerOptions.snippet(location.getAddress().toString().replace(",", "\n"));
+
+
+                if (lastTempMarker != null) {
+                    lastTempMarker.remove();
+                }
+
+                lastTempMarker = mMap.addMarker(lastTemporaryMarkerOptions);
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastTempLatLng, mMap.getCameraPosition().zoom));
+            }
+        });
     }
 }

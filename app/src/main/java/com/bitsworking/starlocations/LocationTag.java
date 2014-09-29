@@ -61,7 +61,7 @@ public class LocationTag {
     private SearchParams mSearchParams = null;
 
     /**
-     * Query for either GPS coordinates or location name
+     * Query for either GPS coordinates or location name. Blocking geocoding!
      */
     public static LocationTag fromLocationQuery(Context context, String query) {
         Log.v(TAG, "fromLocationQuery: " + query);

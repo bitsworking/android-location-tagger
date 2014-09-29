@@ -152,15 +152,10 @@ public class MainActivity extends Activity
     }
 
     @Override
-    public void onNavigationDrawerItemSelected(int position) {
+    public void onNavigationDrawerItemSelected(int fragmentId) {
         // update the main content by replacing fragments
-        Log.v(TAG, "onNavigationDrawerItemSelected: " + position);
-        showFragment(position);
-    }
+        Log.v(TAG, "onNavigationDrawerItemSelected: " + fragmentId);
 
-
-//    protected void showFragment(int resId, Fragment fragment, String tag, String lastTag, boolean addToBackStack ) {
-    protected void showFragment(int fragmentId) {
         if (fragment_attached == fragmentId) {
             Log.w(TAG, "Not showing the same fragment: " + fragmentId);
             return;
@@ -380,19 +375,25 @@ public class MainActivity extends Activity
         return resultList;
     }
 
-
-    private void handleSearch(String query) {
+    private void handleSearch(final String query) {
         Log.v(TAG, "handleSearch: " + query);
+
         // Save to recent suggestions
         SearchRecentSuggestions suggestions = new SearchRecentSuggestions(this,
                 MySearchRecentSuggestionsProvider.AUTHORITY, MySearchRecentSuggestionsProvider.MODE);
         suggestions.saveRecentQuery(query, null);
 
-        // Geocoding and shit
-        LocationTag tag = LocationTag.fromLocationQuery(this, query);
+        // Geocoding and shit in background thread
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                LocationTag tag = LocationTag.fromLocationQuery(getBaseContext(), query);
+                mMapFragment.handleSearchResult(tag);
+            }
+        };
+        thread.start();
 
         // Show Map Fragment
-        showFragment(FRAGMENT_MAP);
-        mMapFragment.handleSearchResult(tag);
+        mNavigationDrawerFragment.selectItem(FRAGMENT_MAP);
     }
 }
