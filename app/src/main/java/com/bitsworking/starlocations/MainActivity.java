@@ -28,6 +28,7 @@ import com.bitsworking.starlocations.fragments.InfoFragment;
 import com.bitsworking.starlocations.fragments.ListFragment;
 import com.bitsworking.starlocations.fragments.MapFragment;
 import com.bitsworking.starlocations.fragments.NavigationDrawerFragment;
+import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -69,9 +70,8 @@ public class MainActivity extends Activity
     private Handler mHandler = new Handler();
 
     private SearchView mSearchView;
-    private String[] mAutocompleteResults = {"a", "b", "c"};
 
-    private int section_attached = 0;
+    private int fragment_attached = -1;
     private Fragment mLastFragment;
 
     private boolean gps_enabled = false;
@@ -84,9 +84,7 @@ public class MainActivity extends Activity
         setContentView(R.layout.activity_main);
 
         // Default section and title
-        section_attached = 0;
         mTitle = getString(R.string.title_section0);
-//        mTitle = getTitle();
 
         // Setup Navigation Drawer
         mNavigationDrawerFragment = (NavigationDrawerFragment)
@@ -112,15 +110,13 @@ public class MainActivity extends Activity
         Log.v(TAG, "handleIntent: " + intent.toString());
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
-            Log.v(TAG, "handleIntent->search: " + query);
+//            Log.v(TAG, "handleIntent->search: " + query);
 
             // If user comes from autocomplete, fill edittext like normal input
-            mSearchView.setQuery(query, false);
+            mSearchView.setQuery("", false);
+            mSearchView.setIconified(true);
 
-            // Save to recent suggestions
-            SearchRecentSuggestions suggestions = new SearchRecentSuggestions(this,
-                    MySearchRecentSuggestionsProvider.AUTHORITY, MySearchRecentSuggestionsProvider.MODE);
-            suggestions.saveRecentQuery(query, null);
+            handleSearch(query);
         }
     }
 
@@ -159,23 +155,41 @@ public class MainActivity extends Activity
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
         Log.v(TAG, "onNavigationDrawerItemSelected: " + position);
-        if (position == POS_MAP) {
-            showFragment(mMapFragment);
-            mTitle = getString(R.string.title_section0);
-        } else if (position == POS_LIST) {
-            showFragment(mListFragment);
-            mTitle = getString(R.string.title_section1);
-        } else if (position == POS_INFO) {
-            showFragment(mInfoFragment);
-            mTitle = getString(R.string.title_section2);
-        }
-
-        section_attached = position;
+        showFragment(position);
     }
 
 
 //    protected void showFragment(int resId, Fragment fragment, String tag, String lastTag, boolean addToBackStack ) {
-    protected void showFragment(Fragment fragment) {
+    protected void showFragment(int fragmentId) {
+        if (fragment_attached == fragmentId) {
+            Log.w(TAG, "Not showing the same fragment: " + fragmentId);
+            return;
+        }
+
+        Fragment fragment = null;
+
+        switch (fragmentId) {
+            case FRAGMENT_MAP:
+                fragment = mMapFragment;
+                mTitle = getString(R.string.title_section0);
+                break;
+            case FRAGMENT_LIST:
+                fragment = mListFragment;
+                mTitle = getString(R.string.title_section1);
+                break;
+            case FRAGMENT_INFO:
+                fragment = mInfoFragment;
+                mTitle = getString(R.string.title_section2);
+                break;
+        }
+
+        if (fragment == null) {
+            Log.e(TAG, "Cannot attach fragment that is null");
+            return;
+        }
+
+        fragment_attached = fragmentId;
+
         FragmentManager fragmentManager = getFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
 
@@ -211,39 +225,9 @@ public class MainActivity extends Activity
             getMenuInflater().inflate(R.menu.main, menu);
 
             // Setup SearchView
-            mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-//            mSearchView.setOnSearchClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    // clicked on the search button, input field expanded
-//                }
-//            });
-//            mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-//                @Override
-//                public boolean onQueryTextSubmit(String query) {
-//                    // Submitted text for search
-//                    Toast.makeText(getBaseContext(), "Query: " + query, Toast.LENGTH_LONG).show();
-//                    return false;
-//                }
-//
-//                @Override
-//                public boolean onQueryTextChange(String newText) {
-////                    mSuggestionAdapter.
-//                    return false;
-//                }
-//            });
-
             SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+            mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
             mSearchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
-//            mSearchView.setIconifiedByDefault(false);
-
-//            mSuggestionAdapter = new SimpleCursorAdapter(this,
-//                    android.R.layout.simple_list_item_1,
-//                    null,
-//                    mAutocompleteResults,
-//                    new int[] { android.R.layout.simple_list_item_1 },
-//                    0);
-//            mSearchView.setSuggestionsAdapter(mSuggestionAdapter);
 
             // Setup ShareActionView with default intent
             mShareActionProvider = (ShareActionProvider) menu.findItem(R.id.action_share).getActionProvider();
@@ -276,7 +260,7 @@ public class MainActivity extends Activity
 //        }
 //        } else if (id == R.id.action_location_current) {
 //            // Use current location action bar icon
-//            if (section_attached == POS_INFO) {
+//            if (fragment_attached == FRAGMENT_INFO) {
 //                mInfoFragment.useCurrentLocation(getLocation());
 //            }
 //            return true;
@@ -316,11 +300,11 @@ public class MainActivity extends Activity
         mLastKnownLocation = location;
 
         // Let fragments know about better location
-        if (section_attached == POS_MAP) {
+        if (fragment_attached == FRAGMENT_MAP) {
             mMapFragment.newLastKnownLocation(location);
-        } else if (section_attached == POS_LIST) {
+        } else if (fragment_attached == FRAGMENT_LIST) {
 //            Toast.makeText(this, getLocation().toString(), Toast.LENGTH_SHORT).show();
-        } else if (section_attached == POS_INFO) {
+        } else if (fragment_attached == FRAGMENT_INFO) {
             mInfoFragment.newLastKnownLocation(location);
         }
     }
@@ -330,10 +314,7 @@ public class MainActivity extends Activity
         Thread thread = new Thread() {
             @Override
             public void run() {
-//                mAutocompleteResults.clear();
-//                mAutocompleteResults.addAll(_autocomplete(input));
                 _autocomplete(input);
-                Log.v(TAG, "autoCompleteResults updated. now " + mAutocompleteResults.toString());
             }
         };
         thread.start();
@@ -393,5 +374,21 @@ public class MainActivity extends Activity
         }
 
         return resultList;
+    }
+
+
+    private void handleSearch(String query) {
+        Log.v(TAG, "handleSearch: " + query);
+        // Save to recent suggestions
+        SearchRecentSuggestions suggestions = new SearchRecentSuggestions(this,
+                MySearchRecentSuggestionsProvider.AUTHORITY, MySearchRecentSuggestionsProvider.MODE);
+        suggestions.saveRecentQuery(query, null);
+
+        // Geocoding and shit
+        LocationTag tag = LocationTag.fromLocationQuery(this, query);
+
+        // Show Map Fragment
+        showFragment(FRAGMENT_MAP);
+        mMapFragment.handleSearchResult(tag);
     }
 }

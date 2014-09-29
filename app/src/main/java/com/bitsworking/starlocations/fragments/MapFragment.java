@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.bitsworking.starlocations.Constants;
+import com.bitsworking.starlocations.LocationTag;
 import com.bitsworking.starlocations.MainActivity;
 import com.bitsworking.starlocations.R;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -71,7 +72,7 @@ public class MapFragment extends Fragment {
         super.onAttach(activity);
         Log.v(TAG, "onAttach");
         mActivity = activity;
-//        ((MainActivity) activity).onSectionAttached(Constants.POS_MAP);
+//        ((MainActivity) activity).onSectionAttached(Constants.FRAGMENT_MAP);
     }
 
 
@@ -102,6 +103,7 @@ public class MapFragment extends Fragment {
     }
 
     private void setUpMap() {
+        final Location lastUnsafeLocation = ((MainActivity) getActivity()).getLocation();
         UiSettings uiSettings = mMap.getUiSettings();
 
         mMap.setMyLocationEnabled(true);
@@ -112,21 +114,38 @@ public class MapFragment extends Fragment {
             public boolean onMyLocationButtonClick() {
                 Log.v(TAG, "onMyLocationButtonCLick");
                 if (mLastKnownLocation == null) {
-                    Location helperLocation = ((MainActivity) getActivity()).getLocation();
-                    if (helperLocation == null) {
+                    if (lastUnsafeLocation == null) {
                         Toast.makeText(getActivity(), "Waiting for location...", Toast.LENGTH_LONG).show();
                         return true;
                     } else {
                         // Uncertain last known position
                         Toast.makeText(getActivity(), "Found helper location...", Toast.LENGTH_LONG).show();
-                        mLastKnownLocation = helperLocation;
+                        mLastKnownLocation = lastUnsafeLocation;
                     }
                 }
                 mMap.addMarker(new MarkerOptions().position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude())).title("My Home").snippet("Home Address"));
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(),
-                        mLastKnownLocation.getLongitude()), 12.0f));
+                        mLastKnownLocation.getLongitude()), 10.0f));
                 return false;
             }
         });
+
+//        mMap.addMarker(new MarkerOptions().position(new LatLng(lastUnsafeLocation.getLatitude(), lastUnsafeLocation.getLongitude())).title("My Home").snippet("Home Address"));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastUnsafeLocation.getLatitude(), lastUnsafeLocation.getLongitude()), 8.0f));
+    }
+
+    public void handleSearchResult(LocationTag location) {
+        Log.v(TAG, "searching for " + location);
+        if (location == null) {
+            return;
+        }
+
+        MarkerOptions markerOptions = new MarkerOptions()
+                .position(location.getCoordinates())
+                .title(location.getSearchParams().getQuery())
+                .snippet(location.getAddress().toString().replace(",", "\n"));
+
+        mMap.addMarker(markerOptions);
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), 8.0f));
     }
 }
