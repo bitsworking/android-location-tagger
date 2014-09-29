@@ -3,10 +3,11 @@
     android:label="@string/app_name"
     android:hint="@string/search_hint"
     android:voiceSearchMode="showVoiceSearchButton|launchRecognizer"
+    android:searchSuggestAuthority="com.bitsworking.starlocations.contentproviders.MySearchRecentSuggestionsProvider"
+    android:searchSuggestSelection=" ?" >
 
-    >
 
     <!--
-    android:searchSuggestAuthority="com.bitsworking.starlocations.SearchSuggestionsProvider"
+    android:searchSuggestAuthority="com.bitsworking.starlocations.contentproviders.SearchSuggestionsProvider"
     -->
 </searchable>

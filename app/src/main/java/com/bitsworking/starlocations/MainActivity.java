@@ -14,17 +14,16 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.SearchRecentSuggestions;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
-import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.SearchView;
 import android.widget.ShareActionProvider;
 import android.widget.SimpleCursorAdapter;
-import android.widget.Toast;
 
+import com.bitsworking.starlocations.contentproviders.MySearchRecentSuggestionsProvider;
 import com.bitsworking.starlocations.fragments.InfoFragment;
 import com.bitsworking.starlocations.fragments.ListFragment;
 import com.bitsworking.starlocations.fragments.MapFragment;
@@ -113,7 +112,15 @@ public class MainActivity extends Activity
         Log.v(TAG, "handleIntent: " + intent.toString());
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
-            Log.v(TAG, "onCreate->search intent: " + query);
+            Log.v(TAG, "handleIntent->search: " + query);
+
+            // If user comes from autocomplete, fill edittext like normal input
+            mSearchView.setQuery(query, false);
+
+            // Save to recent suggestions
+            SearchRecentSuggestions suggestions = new SearchRecentSuggestions(this,
+                    MySearchRecentSuggestionsProvider.AUTHORITY, MySearchRecentSuggestionsProvider.MODE);
+            suggestions.saveRecentQuery(query, null);
         }
     }
 
@@ -133,8 +140,6 @@ public class MainActivity extends Activity
             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         if (network_enabled)
             mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
-
-        autocomplete("vienn");
     }
 
     @Override
@@ -149,8 +154,6 @@ public class MainActivity extends Activity
         Log.v(TAG, "onSearchRequested");
         return super.onSearchRequested();
     }
-
-
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
