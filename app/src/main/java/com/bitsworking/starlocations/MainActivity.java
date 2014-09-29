@@ -160,18 +160,18 @@ public class MainActivity extends Activity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        if (id == R.id.action_settings) {
-            // Settings
-            return true;
-
-        } else if (id == R.id.action_location_current) {
-            // Use current location action bar icon
-            if (section_attached == POS_INFO) {
-                mInfoFragment.useCurrentLocation(getLocation());
-            }
-            return true;
-        }
+//
+//        if (id == R.id.action_settings) {
+//            // Settings
+//            return true;
+//        }
+//        } else if (id == R.id.action_location_current) {
+//            // Use current location action bar icon
+//            if (section_attached == POS_INFO) {
+//                mInfoFragment.useCurrentLocation(getLocation());
+//            }
+//            return true;
+//        }
 
         return super.onOptionsItemSelected(item);
     }
