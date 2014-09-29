@@ -6,6 +6,8 @@ import android.app.ActionBar;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
@@ -17,8 +19,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.SearchView;
 import android.widget.ShareActionProvider;
+import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 import com.bitsworking.starlocations.fragments.InfoFragment;
@@ -65,11 +69,15 @@ public class MainActivity extends Activity
     private ShareActionProvider mShareActionProvider;
     private Handler mHandler = new Handler();
 
+    private SearchView mSearchView;
+    private String[] mAutocompleteResults = {"a", "b", "c"};
+
     private int section_attached = 0;
     private Fragment mLastFragment;
 
     private boolean gps_enabled = false;
     private boolean network_enabled = false;
+    private SimpleCursorAdapter mSuggestionAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +98,23 @@ public class MainActivity extends Activity
 
         // Acquire a reference to the system Location Manager
         mLocationManager = (LocationManager) getSystemService(Activity.LOCATION_SERVICE);
+
+        // Get the intent, verify the action and get the query
+        handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+        Log.v(TAG, "handleIntent: " + intent.toString());
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            String query = intent.getStringExtra(SearchManager.QUERY);
+            Log.v(TAG, "onCreate->search intent: " + query);
+        }
     }
 
     @Override
@@ -118,6 +143,14 @@ public class MainActivity extends Activity
 
         mLocationManager.removeUpdates(locationListener);
     }
+
+    @Override
+    public boolean onSearchRequested() {
+        Log.v(TAG, "onSearchRequested");
+        return super.onSearchRequested();
+    }
+
+
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
@@ -175,26 +208,39 @@ public class MainActivity extends Activity
             getMenuInflater().inflate(R.menu.main, menu);
 
             // Setup SearchView
-            SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-            searchView.setOnSearchClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // clicked on the search button, input field expanded
-                }
-            });
-            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-                @Override
-                public boolean onQueryTextSubmit(String query) {
-                    // Submitted text for search
-                    Toast.makeText(getBaseContext(), "Query: " + query, Toast.LENGTH_LONG).show();
-                    return false;
-                }
+            mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+//            mSearchView.setOnSearchClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    // clicked on the search button, input field expanded
+//                }
+//            });
+//            mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+//                @Override
+//                public boolean onQueryTextSubmit(String query) {
+//                    // Submitted text for search
+//                    Toast.makeText(getBaseContext(), "Query: " + query, Toast.LENGTH_LONG).show();
+//                    return false;
+//                }
+//
+//                @Override
+//                public boolean onQueryTextChange(String newText) {
+////                    mSuggestionAdapter.
+//                    return false;
+//                }
+//            });
 
-                @Override
-                public boolean onQueryTextChange(String newText) {
-                    return false;
-                }
-            });
+            SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+            mSearchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+//            mSearchView.setIconifiedByDefault(false);
+
+//            mSuggestionAdapter = new SimpleCursorAdapter(this,
+//                    android.R.layout.simple_list_item_1,
+//                    null,
+//                    mAutocompleteResults,
+//                    new int[] { android.R.layout.simple_list_item_1 },
+//                    0);
+//            mSearchView.setSuggestionsAdapter(mSuggestionAdapter);
 
             // Setup ShareActionView with default intent
             mShareActionProvider = (ShareActionProvider) menu.findItem(R.id.action_share).getActionProvider();
@@ -281,7 +327,10 @@ public class MainActivity extends Activity
         Thread thread = new Thread() {
             @Override
             public void run() {
-                ArrayList<String> results = _autocomplete(input);
+//                mAutocompleteResults.clear();
+//                mAutocompleteResults.addAll(_autocomplete(input));
+                _autocomplete(input);
+                Log.v(TAG, "autoCompleteResults updated. now " + mAutocompleteResults.toString());
             }
         };
         thread.start();
@@ -300,7 +349,7 @@ public class MainActivity extends Activity
             StringBuilder sb = new StringBuilder(PLACES_API_BASE + PLACES_API_TYPE_AUTOCOMPLETE + PLACES_API_OUT_JSON);
             sb.append("?key=" + PLACES_API_KEY);
 //            sb.append("&components=country:uk");
-            sb.append("&types=(geocode)");
+//            sb.append("&types=(geocode)");
             sb.append("&input=" + URLEncoder.encode(input, "utf8"));
 
             URL url = new URL(sb.toString());
