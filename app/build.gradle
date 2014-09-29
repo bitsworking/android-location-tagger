@@ -1,25 +1,38 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+                debug {
+            keyAlias 'debug1'
+            keyPassword '7HIToifdJNFn'
+            storeFile file('debug-keystore.jks')
+            storePassword '15cHBbp4wj2j'
+        }
+    }
     compileSdkVersion 20
-    buildToolsVersion "20.0.0"
-
+    buildToolsVersion '20.0.0'
     defaultConfig {
-        applicationId "com.bitsworking.mylocations"
+        applicationId 'com.bitsworking.starlocations'
         minSdkVersion 14
         targetSdkVersion 20
         versionCode 1
-        versionName "1.0"
+        versionName '1.0'
     }
     buildTypes {
         release {
             runProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            signingConfig signingConfigs.debug
+        }
+    }
+    productFlavors {
     }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:support-v4:20.0.0'
+    compile 'com.google.android.gms:play-services:5.+'
 }
