@@ -14,6 +14,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
+import android.view.View;
+import android.widget.SearchView;
+import android.widget.Toast;
 
 import com.bitsworking.starlocations.fragments.InfoFragment;
 import com.bitsworking.starlocations.fragments.ListFragment;
@@ -56,7 +59,10 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mTitle = getTitle();
+        // Default section and title
+        section_attached = 0;
+        mTitle = getString(R.string.title_section0);
+//        mTitle = getTitle();
 
         // Setup Navigation Drawer
         mNavigationDrawerFragment = (NavigationDrawerFragment)
@@ -100,13 +106,13 @@ public class MainActivity extends Activity
         Log.v(TAG, "onNavigationDrawerItemSelected: " + position);
         if (position == POS_MAP) {
             showFragment(mMapFragment);
-            mTitle = getString(R.string.title_section1);
+            mTitle = getString(R.string.title_section0);
         } else if (position == POS_LIST) {
             showFragment(mListFragment);
-            mTitle = getString(R.string.title_section2);
+            mTitle = getString(R.string.title_section1);
         } else if (position == POS_INFO) {
             showFragment(mInfoFragment);
-            mTitle = getString(R.string.title_section3);
+            mTitle = getString(R.string.title_section2);
         }
 
         section_attached = position;
@@ -134,10 +140,10 @@ public class MainActivity extends Activity
     }
 
     public void restoreActionBar() {
-        ActionBar actionBar = getActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
-        actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setTitle(mTitle);
+        ActionBar mActionBar = getActionBar();
+        mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+        mActionBar.setDisplayShowTitleEnabled(true);
+        mActionBar.setTitle(mTitle);
     }
 
 
@@ -148,6 +154,31 @@ public class MainActivity extends Activity
             // if the drawer is not showing. Otherwise, let the drawer
             // decide what to show in the action bar.
             getMenuInflater().inflate(R.menu.main, menu);
+
+            // Setup SearchView
+            SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+            searchView.setOnSearchClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // clicked on the search button, input field expanded
+                }
+            });
+
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    // Submitted text for search
+                    Toast.makeText(getBaseContext(), "Query: " + query, Toast.LENGTH_LONG).show();
+                    return false;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    return false;
+                }
+            });
+
+            // Setup Actionbar
             restoreActionBar();
             return true;
         }
