@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.bitsworking.starlocations.Constants;
 import com.bitsworking.starlocations.MainActivity;
@@ -110,6 +111,17 @@ public class MapFragment extends Fragment {
             @Override
             public boolean onMyLocationButtonClick() {
                 Log.v(TAG, "onMyLocationButtonCLick");
+                if (mLastKnownLocation == null) {
+                    Location helperLocation = ((MainActivity) getActivity()).getLocation();
+                    if (helperLocation == null) {
+                        Toast.makeText(getActivity(), "Waiting for location...", Toast.LENGTH_LONG).show();
+                        return true;
+                    } else {
+                        // Uncertain last known position
+                        Toast.makeText(getActivity(), "Found helper location...", Toast.LENGTH_LONG).show();
+                        mLastKnownLocation = helperLocation;
+                    }
+                }
                 mMap.addMarker(new MarkerOptions().position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude())).title("My Home").snippet("Home Address"));
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(),
                         mLastKnownLocation.getLongitude()), 12.0f));

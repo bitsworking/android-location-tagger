@@ -48,6 +48,9 @@ public class MainActivity extends Activity
     private int section_attached = 0;
     private Fragment mLastFragment;
 
+    private boolean gps_enabled = false;
+    private boolean network_enabled = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,13 +73,24 @@ public class MainActivity extends Activity
     public void onResume() {
         super.onResume();  // Always call the superclass method first
 
+        //exceptions will be thrown if provider is not permitted.
+        try { gps_enabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER); } catch (Exception e) {}
+        try { network_enabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER); } catch (Exception e) {}
+
+        // If no location enabled, we have a problem (TODO)
+//        if(!gps_enabled && !network_enabled) {}
+
         // Register the listener with the Location Manager to receive location updates
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        if (gps_enabled)
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        if (network_enabled)
+            mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
     }
 
     @Override
     public void onPause() {
         super.onPause();  // Always call the superclass method first
+
         mLocationManager.removeUpdates(locationListener);
     }
 
