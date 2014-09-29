@@ -14,6 +14,16 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <!-- Live Updates -->
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Live Updates"
+        android:id="@+id/cb_live_updates"
+        android:layout_alignTop="@+id/section_label"
+        android:layout_alignParentRight="true"
+        />
+
     <!-- Longitude -->
     <TextView
         android:layout_width="wrap_content"
@@ -110,4 +120,47 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 
+
+    <RatingBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:id="@+id/ratingBar"
+        android:layout_below="@+id/tvLabelAlt"
+        android:layout_alignLeft="@+id/tvLabelAlt"
+        android:layout_alignStart="@+id/tvLabelAlt" />
+
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="10dp"
+        android:id="@+id/et_comment"
+        android:singleLine="false"
+        android:lines="3"
+        android:layout_below="@+id/ratingBar"
+        android:layout_alignLeft="@+id/ratingBar"
+        android:layout_alignStart="@+id/ratingBar" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft ="20dp"
+        android:text="Save"
+        android:enabled="false"
+        android:id="@+id/btnSave"
+        android:layout_below="@+id/et_comment"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft ="20dp"
+        android:text="Show on Map"
+        android:enabled="false"
+        android:id="@+id/btnMap"
+        android:layout_toRightOf="@+id/btnSave"
+        android:layout_alignTop="@+id/btnSave" />
 </RelativeLayout>

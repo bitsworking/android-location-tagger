@@ -139,10 +139,16 @@ public class MainActivity extends Activity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+
         if (id == R.id.action_settings) {
+            // Settings
             return true;
-        } else if (item.getItemId() == R.id.action_location_current) {
-            makeUseOfNewLocation();
+
+        } else if (id == R.id.action_location_current) {
+            // Use current location action bar icon
+            if (section_attached == POS_INFO) {
+                mInfoFragment.useCurrentLocation(getLocation());
+            }
             return true;
         }
 
@@ -156,7 +162,7 @@ public class MainActivity extends Activity
             if (Tools.isBetterLocation(location, mLastKnownLocation)) {
                 // Have a better, newer location!
                 Log.v(TAG, "new good location: " + location.toString());
-                mLastKnownLocation = location;
+                makeUseOfNewLocation(location);
             }
         }
 
@@ -175,16 +181,17 @@ public class MainActivity extends Activity
         }
     }
 
-    private void makeUseOfNewLocation() {
+    private void makeUseOfNewLocation(Location location) {
         // Update ui and code on new location
-        Location location = getLocation();
-        Log.v(TAG, "last location: " + getLocation().toString());
+        mLastKnownLocation = location;
+
+        // Let fragments know about better location
         if (section_attached == POS_MAP) {
-            mMapFragment.updateLocation(location);
+            mMapFragment.newLastKnownLocation(location);
         } else if (section_attached == POS_LIST) {
 //            Toast.makeText(this, getLocation().toString(), Toast.LENGTH_SHORT).show();
         } else if (section_attached == POS_INFO) {
-            mInfoFragment.updateLocation(location);
+            mInfoFragment.newLastKnownLocation(location);
         }
     }
 }

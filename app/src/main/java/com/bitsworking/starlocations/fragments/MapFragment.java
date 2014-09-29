@@ -32,7 +32,7 @@ public class MapFragment extends Fragment {
         ((MainActivity) activity).onSectionAttached(Constants.POS_MAP);
     }
 
-    public void updateLocation(Location location) {
+    public void newLastKnownLocation(Location location) {
 
     }
 }
