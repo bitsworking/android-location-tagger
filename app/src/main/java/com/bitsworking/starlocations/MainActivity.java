@@ -11,6 +11,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,6 +25,18 @@ import com.bitsworking.starlocations.fragments.InfoFragment;
 import com.bitsworking.starlocations.fragments.ListFragment;
 import com.bitsworking.starlocations.fragments.MapFragment;
 import com.bitsworking.starlocations.fragments.NavigationDrawerFragment;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 
 
 public class MainActivity extends Activity
@@ -50,6 +63,7 @@ public class MainActivity extends Activity
     private Location mLastKnownLocation;
     private LocationManager mLocationManager;
     private ShareActionProvider mShareActionProvider;
+    private Handler mHandler = new Handler();
 
     private int section_attached = 0;
     private Fragment mLastFragment;
@@ -94,6 +108,8 @@ public class MainActivity extends Activity
             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         if (network_enabled)
             mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+
+        autocomplete("vienn");
     }
 
     @Override
@@ -258,5 +274,72 @@ public class MainActivity extends Activity
         } else if (section_attached == POS_INFO) {
             mInfoFragment.newLastKnownLocation(location);
         }
+    }
+
+
+    private void autocomplete(final String input) {
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                ArrayList<String> results = _autocomplete(input);
+            }
+        };
+        thread.start();
+    }
+
+    private ArrayList<String> _autocomplete(String input) {
+        return _autocomplete(input, null, null);
+    }
+
+    private ArrayList<String> _autocomplete(String input, Location bias_location, Integer bias_radius_m) {
+        ArrayList<String> resultList = null;
+
+        HttpURLConnection conn = null;
+        StringBuilder jsonResults = new StringBuilder();
+        try {
+            StringBuilder sb = new StringBuilder(PLACES_API_BASE + PLACES_API_TYPE_AUTOCOMPLETE + PLACES_API_OUT_JSON);
+            sb.append("?key=" + PLACES_API_KEY);
+//            sb.append("&components=country:uk");
+            sb.append("&types=(geocode)");
+            sb.append("&input=" + URLEncoder.encode(input, "utf8"));
+
+            URL url = new URL(sb.toString());
+            conn = (HttpURLConnection) url.openConnection();
+            InputStreamReader in = new InputStreamReader(conn.getInputStream());
+
+            // Load the results into a StringBuilder
+            int read;
+            char[] buff = new char[1024];
+            while ((read = in.read(buff)) != -1) {
+                jsonResults.append(buff, 0, read);
+            }
+            Log.v(TAG, jsonResults.toString());
+        } catch (MalformedURLException e) {
+            Log.e(TAG, "Error processing Places API URL", e);
+            return resultList;
+        } catch (IOException e) {
+            Log.e(TAG, "Error connecting to Places API", e);
+            return resultList;
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+
+        try {
+            // Create a JSON object hierarchy from the results
+            JSONObject jsonObj = new JSONObject(jsonResults.toString());
+            JSONArray predsJsonArray = jsonObj.getJSONArray("predictions");
+
+            // Extract the Place descriptions from the results
+            resultList = new ArrayList<String>(predsJsonArray.length());
+            for (int i = 0; i < predsJsonArray.length(); i++) {
+                resultList.add(predsJsonArray.getJSONObject(i).getString("description"));
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "Cannot process JSON results", e);
+        }
+
+        return resultList;
     }
 }
