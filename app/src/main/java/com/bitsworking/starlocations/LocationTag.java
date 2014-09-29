@@ -103,7 +103,7 @@ public class LocationTag {
         return tag;
     }
 
-    private static LocationTag fromCoordinates(Context context, LatLng coordinates) {
+    public static LocationTag fromCoordinates(Context context, LatLng coordinates) {
         Log.v(TAG, "fromLocationCoordinates: " + coordinates.toString());
 
         LocationTag tag = new LocationTag();

@@ -64,7 +64,7 @@ public class MainActivity extends Activity
      */
     private CharSequence mTitle;
 
-    private Location mLastKnownLocation;
+    private Location mLastKnownLocation = null;
     private LocationManager mLocationManager;
     private ShareActionProvider mShareActionProvider;
     private Handler mHandler = new Handler();
@@ -289,8 +289,12 @@ public class MainActivity extends Activity
 
     public Location getLocation() {
         if (mLastKnownLocation == null) {
-            return mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            // return unsafe location
+            Location l1 = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Location l2 = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            return (Tools.isBetterLocation(l2, l1)) ? l2 : l1;
         } else {
+            // return last learned location
             return mLastKnownLocation;
         }
     }

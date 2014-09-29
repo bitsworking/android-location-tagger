@@ -104,11 +104,13 @@ public class MapFragment extends Fragment {
 
     private void setUpMap() {
         final Location lastUnsafeLocation = ((MainActivity) getActivity()).getLocation();
-        UiSettings uiSettings = mMap.getUiSettings();
 
+        // Initial positining
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastUnsafeLocation.getLatitude(), lastUnsafeLocation.getLongitude()), 8.0f));
+
+        // My location button overlay
         mMap.setMyLocationEnabled(true);
-        uiSettings.setMyLocationButtonEnabled(true);
-
+        mMap.getUiSettings().setMyLocationButtonEnabled(true);
         mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
             @Override
             public boolean onMyLocationButtonClick() {
@@ -116,22 +118,20 @@ public class MapFragment extends Fragment {
                 if (mLastKnownLocation == null) {
                     if (lastUnsafeLocation == null) {
                         Toast.makeText(getActivity(), "Waiting for location...", Toast.LENGTH_LONG).show();
-                        return true;
+                        return false;
                     } else {
                         // Uncertain last known position
                         Toast.makeText(getActivity(), "Found helper location...", Toast.LENGTH_LONG).show();
                         mLastKnownLocation = lastUnsafeLocation;
                     }
                 }
-                mMap.addMarker(new MarkerOptions().position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude())).title("My Home").snippet("Home Address"));
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(),
-                        mLastKnownLocation.getLongitude()), 10.0f));
+
+                LatLng coords = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
+                LocationTag tag = LocationTag.fromCoordinates(getActivity(), coords);
+                handleSearchResult(tag);
                 return false;
             }
         });
-
-//        mMap.addMarker(new MarkerOptions().position(new LatLng(lastUnsafeLocation.getLatitude(), lastUnsafeLocation.getLongitude())).title("My Home").snippet("Home Address"));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastUnsafeLocation.getLatitude(), lastUnsafeLocation.getLongitude()), 8.0f));
     }
 
     public void handleSearchResult(LocationTag location) {
@@ -146,6 +146,6 @@ public class MapFragment extends Fragment {
                 .snippet(location.getAddress().toString().replace(",", "\n"));
 
         mMap.addMarker(markerOptions);
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), 8.0f));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), 10.0f));
     }
 }
