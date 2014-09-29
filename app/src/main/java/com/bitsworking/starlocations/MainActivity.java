@@ -3,7 +3,9 @@ package com.bitsworking.starlocations;
 import android.app.Activity;
 
 import android.app.ActionBar;
+import android.app.Fragment;
 import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -44,6 +46,7 @@ public class MainActivity extends Activity
     private LocationManager mLocationManager;
 
     private int section_attached = 0;
+    private Fragment mLastFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,36 +83,40 @@ public class MainActivity extends Activity
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
-        FragmentManager fragmentManager = getFragmentManager();
+        Log.v(TAG, "onNavigationDrawerItemSelected: " + position);
         if (position == POS_MAP) {
-            fragmentManager.beginTransaction()
-                    .replace(R.id.container, mMapFragment)
-                    .commit();
+            showFragment(mMapFragment);
+            mTitle = getString(R.string.title_section1);
         } else if (position == POS_LIST) {
-            fragmentManager.beginTransaction()
-                    .replace(R.id.container, mListFragment)
-                    .commit();
+            showFragment(mListFragment);
+            mTitle = getString(R.string.title_section2);
         } else if (position == POS_INFO) {
-            fragmentManager.beginTransaction()
-                    .replace(R.id.container, mInfoFragment)
-                    .commit();
+            showFragment(mInfoFragment);
+            mTitle = getString(R.string.title_section3);
         }
+
+        section_attached = position;
     }
 
-    public void onSectionAttached(int number) {
-        // callback when a fragment section has been attached
-        section_attached = number;
-        switch (number) {
-            case POS_MAP:
-                mTitle = getString(R.string.title_section1);
-                break;
-            case POS_LIST:
-                mTitle = getString(R.string.title_section2);
-                break;
-            case POS_INFO:
-                mTitle = getString(R.string.title_section3);
-                break;
+
+//    protected void showFragment(int resId, Fragment fragment, String tag, String lastTag, boolean addToBackStack ) {
+    protected void showFragment(Fragment fragment) {
+        FragmentManager fragmentManager = getFragmentManager();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+
+        if (mLastFragment != null) {
+            transaction.hide(mLastFragment);
         }
+
+        if (fragment.isAdded()) {
+            transaction.show(fragment);
+        } else {
+            transaction.add(R.id.container, fragment);
+        }
+
+        mLastFragment = fragment;
+
+        transaction.commit();
     }
 
     public void restoreActionBar() {

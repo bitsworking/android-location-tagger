@@ -28,6 +28,6 @@ public class ListFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        ((MainActivity) activity).onSectionAttached(Constants.POS_LIST);
+//        ((MainActivity) activity).onSectionAttached(Constants.POS_LIST);
     }
 }
