@@ -22,6 +22,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.widget.SearchView;
 import android.widget.ShareActionProvider;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
 import com.bitsworking.starlocations.contentproviders.MySearchRecentSuggestionsProvider;
 import com.bitsworking.starlocations.fragments.InfoFragment;
@@ -76,7 +77,6 @@ public class MainActivity extends Activity
 
     private boolean gps_enabled = false;
     private boolean network_enabled = false;
-    private SimpleCursorAdapter mSuggestionAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -387,8 +387,14 @@ public class MainActivity extends Activity
         Thread thread = new Thread() {
             @Override
             public void run() {
-                LocationTag tag = LocationTag.fromLocationQuery(getBaseContext(), query);
-                mMapFragment.handleSearchResult(tag);
+                LocationTag tag = null;
+                try {
+                    tag = LocationTag.fromLocationQuery(getBaseContext(), query);
+                    mMapFragment.handleSearchResult(tag);
+                } catch (LocationTag.NoCoordinatesException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getBaseContext(), "Could not get a location for query: " + query, Toast.LENGTH_LONG).show();
+                }
             }
         };
         thread.start();

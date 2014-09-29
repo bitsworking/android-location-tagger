@@ -55,15 +55,16 @@ public class LocationTag {
         }
     }
 
-    private LatLng mCoordinates = null;
-    private Address mAddress = null;
+    public static class NoCoordinatesException extends Exception {}
 
-    private SearchParams mSearchParams = null;
+    private SearchParams mSearchParams = null;  // should always be populated
+    private LatLng mCoordinates = null; // should always be populated
+    private Address mAddress = null;    // might be null
 
     /**
      * Query for either GPS coordinates or location name. Blocking geocoding!
      */
-    public static LocationTag fromLocationQuery(Context context, String query) {
+    public static LocationTag fromLocationQuery(Context context, String query) throws NoCoordinatesException {
         Log.v(TAG, "fromLocationQuery: " + query);
         // Check whether GPS
         String[] parts = query.split(query.contains(",") ? "," : ";");
@@ -79,7 +80,7 @@ public class LocationTag {
         return fromLocationName(context, query);
     }
 
-    private static LocationTag fromLocationName(Context context, String locationName) {
+    private static LocationTag fromLocationName(Context context, String locationName) throws NoCoordinatesException {
         Log.v(TAG, "fromLocationName: " + locationName);
 
         LocationTag tag = new LocationTag();
@@ -97,31 +98,45 @@ public class LocationTag {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            throw new NoCoordinatesException();
         }
 
         Log.v(TAG, "tag: " + tag.toString());
         return tag;
     }
 
+    // From coordinates, with geocoding
     public static LocationTag fromCoordinates(Context context, LatLng coordinates) {
+        return fromCoordinates(context, coordinates, true);
+    }
+
+    /**
+     *
+     * @param context
+     * @param coordinates
+     * @param geocode if set to false, no address lookup takes place
+     * @return
+     */
+    public static LocationTag fromCoordinates(Context context, LatLng coordinates, boolean geocode) {
         Log.v(TAG, "fromLocationCoordinates: " + coordinates.toString());
 
         LocationTag tag = new LocationTag();
-        tag.setCoordinates(coordinates);
         tag.setSearchParams(new SearchParams(SearchType.COORDINATES, coordinates.toString()));
+        tag.setCoordinates(coordinates);
 
-        Geocoder geocoder = new Geocoder(context);
-        try {
-            List<Address> addresses = geocoder.getFromLocation(coordinates.latitude, coordinates.longitude, 1);
-            if (addresses.size() > 0) {
-                Log.v(TAG, addresses.get(0).toString());
-                tag.setAddress(addresses.get(0));
-                tag.setCoordinates(new LatLng(addresses.get(0).getLatitude(), addresses.get(0).getLongitude()));
-            } else {
-                Log.w(TAG, "No address found for coordinates");
+        if (geocode) {
+            Geocoder geocoder = new Geocoder(context);
+            try {
+                List<Address> addresses = geocoder.getFromLocation(coordinates.latitude, coordinates.longitude, 1);
+                if (addresses.size() > 0) {
+                    Log.v(TAG, addresses.get(0).toString());
+                    tag.setAddress(addresses.get(0));
+                } else {
+                    Log.w(TAG, "No address found for coordinates");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         Log.v(TAG, "tag: " + tag.toString());

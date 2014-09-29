@@ -132,12 +132,20 @@ public class MapFragment extends Fragment {
                     public void run() {
                         LocationTag tag = LocationTag.fromCoordinates(getActivity(), new LatLng(
                                 mLastKnownLocation.getLatitude(),
-                                mLastKnownLocation.getLongitude()));
+                                mLastKnownLocation.getLongitude()), false);
                         handleSearchResult(tag);
                     }
                 }).start();
 
                 return false;
+            }
+        });
+
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                LocationTag tag = LocationTag.fromCoordinates(getActivity(), latLng, false);
+                handleSearchResult(tag);
             }
         });
     }
@@ -153,17 +161,23 @@ public class MapFragment extends Fragment {
             public void run() {
                 lastTempLatLng = location.getCoordinates();
 
-                MarkerOptions lastTemporaryMarkerOptions = new MarkerOptions();
-                lastTemporaryMarkerOptions.position(lastTempLatLng);
-                lastTemporaryMarkerOptions.title(location.getSearchParams().getQuery());
-                lastTemporaryMarkerOptions.snippet(location.getAddress().toString().replace(",", "\n"));
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.position(lastTempLatLng);
+                markerOptions.draggable(true);
+                markerOptions.title(location.getSearchParams().getQuery());
 
+                if (location.getAddress() != null) {
+                    markerOptions.snippet(location.getAddress().toString().replace(",", "\n"));
+                }
 
                 if (lastTempMarker != null) {
                     lastTempMarker.remove();
                 }
 
-                lastTempMarker = mMap.addMarker(lastTemporaryMarkerOptions);
+                lastTempMarker = mMap.addMarker(markerOptions);
+                lastTempMarker.showInfoWindow();
+
+
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastTempLatLng, mMap.getCameraPosition().zoom));
             }
         });
