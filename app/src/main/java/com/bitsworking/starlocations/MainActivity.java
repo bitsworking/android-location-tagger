@@ -6,6 +6,7 @@ import android.app.ActionBar;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -16,6 +17,7 @@ import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
 import android.widget.SearchView;
+import android.widget.ShareActionProvider;
 import android.widget.Toast;
 
 import com.bitsworking.starlocations.fragments.InfoFragment;
@@ -47,6 +49,7 @@ public class MainActivity extends Activity
 
     private Location mLastKnownLocation;
     private LocationManager mLocationManager;
+    private ShareActionProvider mShareActionProvider;
 
     private int section_attached = 0;
     private Fragment mLastFragment;
@@ -163,7 +166,6 @@ public class MainActivity extends Activity
                     // clicked on the search button, input field expanded
                 }
             });
-
             searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
                 @Override
                 public boolean onQueryTextSubmit(String query) {
@@ -178,11 +180,22 @@ public class MainActivity extends Activity
                 }
             });
 
+            // Setup ShareActionView with default intent
+            mShareActionProvider = (ShareActionProvider) menu.findItem(R.id.action_share).getActionProvider();
+            mShareActionProvider.setShareIntent(Tools.makeLocationSharingIntent("Location Tag", "http://www.bitsworking.com"));
+
             // Setup Actionbar
             restoreActionBar();
             return true;
         }
         return super.onCreateOptionsMenu(menu);
+    }
+
+    /**
+     * Set the intent for the share-action in the Action Bar
+     */
+    public void setShareActionIntent(Intent i) {
+        mShareActionProvider.setShareIntent(i);
     }
 
     @Override
