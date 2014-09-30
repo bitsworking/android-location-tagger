@@ -1,8 +1,7 @@
 package com.bitsworking.starlocations;
 
-import android.app.Activity;
-
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -16,18 +15,15 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.SearchRecentSuggestions;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
-import android.support.v4.widget.DrawerLayout;
 import android.widget.SearchView;
 import android.widget.ShareActionProvider;
-import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 import com.bitsworking.starlocations.contentproviders.MySearchRecentSuggestionsProvider;
 import com.bitsworking.starlocations.exceptions.InvalidLocationException;
-import com.bitsworking.starlocations.exceptions.NoCoordinatesException;
 import com.bitsworking.starlocations.fragments.InfoFragment;
 import com.bitsworking.starlocations.fragments.ListFragment;
 import com.bitsworking.starlocations.fragments.MapFragment;

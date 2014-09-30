@@ -87,12 +87,30 @@ public class MapFragment extends Fragment {
             }
         });
 
+        // Close overlay
         ((TextView) rlOverlay.findViewById(R.id.tvClose)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 closeOverlay();
             }
         });
+
+        // Share button
+        ((Button) rlOverlay.findViewById(R.id.btnShare)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(overlayLocationTag.getShareIntent());
+            }
+        });
+
+        // Save button
+        ((Button) rlOverlay.findViewById(R.id.btnSave)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveLocationTag(overlayLocationTag);
+            }
+        });
+
         return rootView;
     }
 
@@ -254,17 +272,20 @@ public class MapFragment extends Fragment {
 
     public void closeOverlay() {
         if (!isOverlayVisible()) return;
-
-        // Hide View
+        overlayLocationTag = null;
         rlOverlay.setVisibility(View.GONE);
 
         // Show info window if marker, else remove share intent
-        if (lastTempMarker != null) {
-            lastTempMarker.showInfoWindow();
-        }
+//        if (lastTempMarker != null) {
+//            lastTempMarker.showInfoWindow();
+//        }
     }
 
     public boolean isOverlayVisible() {
         return rlOverlay.getVisibility() == View.VISIBLE;
+    }
+
+    private void saveLocationTag(LocationTag locationTag) {
+
     }
 }
