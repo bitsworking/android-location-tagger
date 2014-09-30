@@ -39,13 +39,12 @@ public class LocationTag {
     }
 
     public String getMarkerSnippet() {
-        Log.v(TAG, address.toString());
         String ret = "";
         ret += "Lat: " + latLng.latitude + "\n";
-        ret += "Lng: " + latLng.longitude + "\n";
+        ret += "Lng: " + latLng.longitude;
 
         if (address != null) {
-            ret += "\n";
+            ret += "\n\n";
             if (address.getMaxAddressLineIndex() > 0) ret += address.getAddressLine(0) + "\n";
             if (address.getLocality() != null) ret += address.getLocality() + "\n";
             if (address.getAdminArea() != null) ret += address.getAdminArea() + "\n";

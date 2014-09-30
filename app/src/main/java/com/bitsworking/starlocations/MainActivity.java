@@ -293,11 +293,7 @@ public class MainActivity extends Activity
         mLastKnownLocation = location;
 
         // Let fragments know about better location
-        if (fragment_attached == FRAGMENT_MAP) {
-            mMapFragment.newLastKnownLocation(location);
-        } else if (fragment_attached == FRAGMENT_LIST) {
-//            Toast.makeText(this, getLocation().toString(), Toast.LENGTH_SHORT).show();
-        } else if (fragment_attached == FRAGMENT_INFO) {
+        if (fragment_attached == FRAGMENT_INFO) {
             mInfoFragment.newLastKnownLocation(location);
         }
     }
@@ -416,8 +412,13 @@ public class MainActivity extends Activity
                     }
                 }
 
-                LocationTag tag = new LocationTag(coords, query, address);
-                mMapFragment.handleSearchResult(tag);
+                final LocationTag tag = new LocationTag(coords, query, address);
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mMapFragment.addTempMarker(tag);
+                    }
+                });
             }
         };
         thread.start();

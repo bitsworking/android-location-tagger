@@ -34,7 +34,7 @@ public class MapFragment extends Fragment {
     private MapView mMapView;
     private static GoogleMap mMap;
 
-    private Location mLastKnownLocation;
+//    private Location mLastKnownLocation;
     private Handler mHandler = new Handler();
 
     private Marker lastTempMarker;
@@ -101,14 +101,7 @@ public class MapFragment extends Fragment {
         mMapView.onLowMemory();
     }
 
-    public void newLastKnownLocation(Location location) {
-//        Log.v(TAG, "newL");
-        mLastKnownLocation = location;
-    }
-
     private void setUpMap() {
-        mLastKnownLocation = ((MainActivity) getActivity()).getLocation();
-
         // My location button overlay
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
@@ -116,14 +109,15 @@ public class MapFragment extends Fragment {
             @Override
             public boolean onMyLocationButtonClick() {
                 Log.v(TAG, "onMyLocationButtonCLick");
-                if (mLastKnownLocation == null) {
+                Location lastKnownLocation = ((MainActivity) getActivity()).getLocation();
+                if (lastKnownLocation == null) {
                     Toast.makeText(getActivity(), "Waiting for location...", Toast.LENGTH_LONG).show();
                     return false;
                 }
 
                 addTempMarker(new LocationTag(new LatLng(
-                        mLastKnownLocation.getLatitude(),
-                        mLastKnownLocation.getLongitude())));
+                        lastKnownLocation.getLatitude(),
+                        lastKnownLocation.getLongitude())), 12);
 
                 return false;
             }
@@ -168,6 +162,7 @@ public class MapFragment extends Fragment {
                 LocationTag tag = markerLocationTags.get(marker.getId());
 
                 TextView tv = new TextView(getActivity());
+                tv.setPadding(10, 10, 10, 10);
                 tv.setSingleLine(false);
                 tv.setText(tag.getMarkerSnippet());
                 return tv;
@@ -177,25 +172,15 @@ public class MapFragment extends Fragment {
         mMap.setInfoWindowAdapter(customInfoWindowAdapter);
 
         // Initial positining
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), 8.0f));
-    }
-
-    // Add temporary marker for LocationTag on the UI thread
-    public void handleSearchResult(final LocationTag tag) {
-        Log.v(TAG, "handleSearchResult: " + tag);
-        if (tag == null) {
-            return;
-        }
-
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                addTempMarker(tag);
-            }
-        });
+        Location lastKnownLocation = ((MainActivity) getActivity()).getLocation();
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()), 8.0f));
     }
 
     public void addTempMarker(LocationTag tag) {
+        addTempMarker(tag, mMap.getCameraPosition().zoom);
+    }
+
+    public void addTempMarker(LocationTag tag, float zoom) {
         // Remove old marker
         if (lastTempMarker != null) {
             markerLocationTags.remove(lastTempMarker.getId());
@@ -212,7 +197,7 @@ public class MapFragment extends Fragment {
         markerLocationTags.put(lastTempMarker.getId(), tag);
 
         // Animate to marker
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(tag.latLng, mMap.getCameraPosition().zoom));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(tag.latLng, zoom));
 
         lastTempMarker.showInfoWindow();
     }
