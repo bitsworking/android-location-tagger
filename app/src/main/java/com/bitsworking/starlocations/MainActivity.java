@@ -238,7 +238,7 @@ public class MainActivity extends Activity
 
             // Setup ShareActionView with default intent
             mShareActionProvider = (ShareActionProvider) menu.findItem(R.id.action_share).getActionProvider();
-            mShareActionProvider.setShareIntent(Tools.makeLocationSharingIntent("Location Tag", "http://www.bitsworking.com"));
+            mShareActionProvider.setShareIntent(null);
 
             // Setup Actionbar
             restoreActionBar();

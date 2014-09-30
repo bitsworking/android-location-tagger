@@ -20,16 +20,6 @@ public class Tools {
     private static final String TAG = "Tools";
     private static final int TWO_MINUTES = 1000 * 60 * 2;
 
-    // TODO Later: refactor to use common location class
-    public static Intent makeLocationSharingIntent(String subject, String content) {
-        String message = "abc ... " + content + "<";
-        Intent i = new Intent(Intent.ACTION_SEND);
-        i.setType("text/plain");
-        i.putExtra(Intent.EXTRA_SUBJECT, subject);
-        i.putExtra(Intent.EXTRA_TEXT, message);
-        return i;
-    }
-
     /** Determines whether one Location reading is better than the current Location fix
      * @param location  The new Location that you want to evaluate
      * @param currentBestLocation  The current Location fix, to which you want to compare the new one

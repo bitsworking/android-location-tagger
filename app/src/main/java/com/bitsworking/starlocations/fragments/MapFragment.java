@@ -2,6 +2,7 @@ package com.bitsworking.starlocations.fragments;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -89,9 +90,6 @@ public class MapFragment extends Fragment {
         ((TextView) rlOverlay.findViewById(R.id.tvClose)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (lastTempMarker != null) {
-                    lastTempMarker.showInfoWindow();
-                }
                 closeOverlay();
             }
         });
@@ -230,6 +228,7 @@ public class MapFragment extends Fragment {
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(tag.latLng, zoom));
 
         lastTempMarker.showInfoWindow();
+        ((MainActivity) getActivity()).setShareActionIntent(tag.getShareIntent());
     }
 
     private void showLocationOverlay(LocationTag tag) {
@@ -248,10 +247,21 @@ public class MapFragment extends Fragment {
         }
 
         rlOverlay.setVisibility(View.VISIBLE);
+
+        // Get the intent again, perhaps we did geocoding or stuff
+        ((MainActivity) getActivity()).setShareActionIntent(tag.getShareIntent());
     }
 
     public void closeOverlay() {
+        if (!isOverlayVisible()) return;
+
+        // Hide View
         rlOverlay.setVisibility(View.GONE);
+
+        // Show info window if marker, else remove share intent
+        if (lastTempMarker != null) {
+            lastTempMarker.showInfoWindow();
+        }
     }
 
     public boolean isOverlayVisible() {

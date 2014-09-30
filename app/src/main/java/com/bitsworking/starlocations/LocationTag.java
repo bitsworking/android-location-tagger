@@ -1,5 +1,6 @@
 package com.bitsworking.starlocations;
 
+import android.content.Intent;
 import android.location.Address;
 import android.util.Log;
 
@@ -51,7 +52,7 @@ public class LocationTag {
     }
 
     public String getAddressInfo() {
-        if (address != null) {
+        if (address == null) {
             return null;
         }
 
@@ -64,5 +65,13 @@ public class LocationTag {
 
 
         return ret;
+    }
+
+    public Intent getShareIntent() {
+        Intent i = new Intent(Intent.ACTION_SEND);
+        i.setType("text/plain");
+        i.putExtra(Intent.EXTRA_SUBJECT, "Location Tag");
+        i.putExtra(Intent.EXTRA_TEXT, "http://maps.google.com?q=" + latLng.latitude + "," + latLng.longitude);
+        return i;
     }
 }
