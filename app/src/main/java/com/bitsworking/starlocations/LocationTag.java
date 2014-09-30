@@ -38,24 +38,21 @@ public class LocationTag {
                 '}';
     }
 
-    public String getMarkerTitle() {
-        if (searchQuery != null)
-            return searchQuery;
-        else
-            return latLng.toString();
-    }
-
     public String getMarkerSnippet() {
         Log.v(TAG, address.toString());
-        if (address == null) return null;
+        String ret = "";
+        ret += "Lat: " + latLng.latitude + "\n";
+        ret += "Lng: " + latLng.longitude + "\n";
 
-        String ret = "Lat: " + latLng.latitude + "\nLng: " + latLng.longitude;
-        ret += "<br><br />";
-        if (address.getMaxAddressLineIndex() > 0) ret += address.getAddressLine(0) + ", ";
-        if (address.getLocality() != null) ret += address.getLocality() + ", ";
-        if (address.getAdminArea() != null) ret += address.getAdminArea() + ", ";
-        if (address.getSubAdminArea() != null) ret += address.getSubAdminArea() + ", ";
-        ret += address.getCountryName();
+        if (address != null) {
+            ret += "\n";
+            if (address.getMaxAddressLineIndex() > 0) ret += address.getAddressLine(0) + "\n";
+            if (address.getLocality() != null) ret += address.getLocality() + "\n";
+            if (address.getAdminArea() != null) ret += address.getAdminArea() + "\n";
+            if (address.getSubAdminArea() != null) ret += address.getSubAdminArea() + "\n";
+            ret += address.getCountryName();
+        }
+
         return ret;
     }
 }

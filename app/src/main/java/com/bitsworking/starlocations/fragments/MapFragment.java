@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bitsworking.starlocations.LocationTag;
@@ -21,6 +22,8 @@ import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.HashMap;
 
 /**
  * The Map Fragment
@@ -35,7 +38,7 @@ public class MapFragment extends Fragment {
     private Handler mHandler = new Handler();
 
     private Marker lastTempMarker;
-    private LocationTag lastLocationTag;
+    private HashMap<String, LocationTag> markerLocationTags = new HashMap<String, LocationTag>();
 
     public MapFragment() {
         setRetainInstance(true);
@@ -106,9 +109,6 @@ public class MapFragment extends Fragment {
     private void setUpMap() {
         mLastKnownLocation = ((MainActivity) getActivity()).getLocation();
 
-        // Initial positining
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), 8.0f));
-
         // My location button overlay
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
@@ -156,6 +156,28 @@ public class MapFragment extends Fragment {
                 Toast.makeText(getActivity(), "Info Window Clicked", Toast.LENGTH_LONG).show();
             }
         });
+
+        GoogleMap.InfoWindowAdapter customInfoWindowAdapter = new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                LocationTag tag = markerLocationTags.get(marker.getId());
+
+                TextView tv = new TextView(getActivity());
+                tv.setSingleLine(false);
+                tv.setText(tag.getMarkerSnippet());
+                return tv;
+            }
+        };
+
+        mMap.setInfoWindowAdapter(customInfoWindowAdapter);
+
+        // Initial positining
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), 8.0f));
     }
 
     // Add temporary marker for LocationTag on the UI thread
@@ -174,11 +196,9 @@ public class MapFragment extends Fragment {
     }
 
     public void addTempMarker(LocationTag tag) {
-        // Remember this LocationTag
-        lastLocationTag = tag;
-
         // Remove old marker
         if (lastTempMarker != null) {
+            markerLocationTags.remove(lastTempMarker.getId());
             lastTempMarker.remove();
         }
 
@@ -186,14 +206,14 @@ public class MapFragment extends Fragment {
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(tag.latLng);
         markerOptions.draggable(true);
-        markerOptions.title(tag.getMarkerTitle());
-        markerOptions.snippet(tag.getMarkerSnippet());
 
         // Add marker, show info window
         lastTempMarker = mMap.addMarker(markerOptions);
-        lastTempMarker.showInfoWindow();
+        markerLocationTags.put(lastTempMarker.getId(), tag);
 
         // Animate to marker
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(tag.latLng, mMap.getCameraPosition().zoom));
+
+        lastTempMarker.showInfoWindow();
     }
 }
