@@ -1,6 +1,7 @@
 package com.bitsworking.starlocations;
 
 import android.location.Address;
+import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -45,8 +46,16 @@ public class LocationTag {
     }
 
     public String getMarkerSnippet() {
-        if (address != null)
-            return address.toString();
-        return null;
+        Log.v(TAG, address.toString());
+        if (address == null) return null;
+
+        String ret = "Lat: " + latLng.latitude + "\nLng: " + latLng.longitude;
+        ret += "<br><br />";
+        if (address.getMaxAddressLineIndex() > 0) ret += address.getAddressLine(0) + ", ";
+        if (address.getLocality() != null) ret += address.getLocality() + ", ";
+        if (address.getAdminArea() != null) ret += address.getAdminArea() + ", ";
+        if (address.getSubAdminArea() != null) ret += address.getSubAdminArea() + ", ";
+        ret += address.getCountryName();
+        return ret;
     }
 }

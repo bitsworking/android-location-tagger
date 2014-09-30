@@ -128,8 +128,14 @@ public class MainActivity extends Activity
         super.onResume();  // Always call the superclass method first
 
         //exceptions will be thrown if provider is not permitted.
-        try { gps_enabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER); } catch (Exception e) {}
-        try { network_enabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER); } catch (Exception e) {}
+        try { gps_enabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER); }
+        catch (Exception e) {
+            Log.w(TAG, "GPS location provider is disabled.");
+        }
+        try { network_enabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER); }
+        catch (Exception e) {
+            Log.w(TAG, "Network location provider is disabled.");
+        }
 
         // If no location enabled, we have a problem (TODO)
 //        if(!gps_enabled && !network_enabled) {}
@@ -143,9 +149,9 @@ public class MainActivity extends Activity
 
     @Override
     public void onPause() {
-        super.onPause();  // Always call the superclass method first
-
+        Log.v(TAG, "onPause");
         mLocationManager.removeUpdates(locationListener);
+        super.onPause();  // Always call the superclass method first
     }
 
     @Override
@@ -245,28 +251,6 @@ public class MainActivity extends Activity
         mShareActionProvider.setShareIntent(i);
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-//
-//        if (id == R.id.action_settings) {
-//            // Settings
-//            return true;
-//        }
-//        } else if (id == R.id.action_location_current) {
-//            // Use current location action bar icon
-//            if (fragment_attached == FRAGMENT_INFO) {
-//                mInfoFragment.useCurrentLocation(getLocation());
-//            }
-//            return true;
-//        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
     // Define a listener that responds to location updates
     LocationListener locationListener = new LocationListener() {
         public void onLocationChanged(Location location) {
@@ -285,6 +269,9 @@ public class MainActivity extends Activity
         public void onProviderDisabled(String provider) {}
     };
 
+    /**
+     * Returns a learned location, or as fallback the last known by system
+     */
     public Location getLocation() {
         if (mLastKnownLocation == null) {
             // return unsafe location
@@ -297,6 +284,10 @@ public class MainActivity extends Activity
         }
     }
 
+    /**
+     * Send info about new learned location to the fragments
+     * @param location
+     */
     private void makeUseOfNewLocation(Location location) {
         // Update ui and code on new location
         mLastKnownLocation = location;
@@ -311,7 +302,10 @@ public class MainActivity extends Activity
         }
     }
 
-
+    /**
+     * Start the Google Places API autocomplete in a Thread
+     * @param input
+     */
     private void autocomplete(final String input) {
         Thread thread = new Thread() {
             @Override
