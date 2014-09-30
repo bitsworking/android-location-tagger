@@ -19,6 +19,8 @@ import android.widget.Toast;
 import com.bitsworking.starlocations.LocationTag;
 import com.bitsworking.starlocations.MainActivity;
 import com.bitsworking.starlocations.R;
+import com.bitsworking.starlocations.Tools;
+import com.bitsworking.starlocations.exceptions.InvalidLocationException;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -27,6 +29,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 /**
@@ -224,7 +227,7 @@ public class MapFragment extends Fragment {
         addTempMarker(tag, mMap.getCameraPosition().zoom);
     }
 
-    public void addTempMarker(LocationTag tag, float zoom) {
+    public void addTempMarker(final LocationTag tag, float zoom) {
         // Remove old marker
         if (lastTempMarker != null) {
             markerLocationTags.remove(lastTempMarker.getId());
@@ -247,6 +250,38 @@ public class MapFragment extends Fragment {
 
         lastTempMarker.showInfoWindow();
         ((MainActivity) getActivity()).setShareActionIntent(tag.getShareIntent());
+
+        if (tag.address == null) {
+            // Geocode: get address from coordinates
+            Thread thread = new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        tag.address = Tools.geocodeCoordinatesToAddress(getActivity(), tag.latLng);
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Log.v(TAG, "NEW ADDRESS: " + tag.address.toString());
+                                ((TextView) rlOverlay.findViewById(R.id.tvAddress)).setText(tag.getAddressInfo());
+
+                                // Update Share Intent
+                                ((MainActivity) getActivity()).setShareActionIntent(tag.getShareIntent());
+
+                                // Update the marker info window with address, if its already opened
+                                if (lastTempMarker.isInfoWindowShown()) {
+                                    lastTempMarker.showInfoWindow();
+                                }
+                            }
+                        });
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (InvalidLocationException e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+            thread.start();
+        }
     }
 
     private void showLocationOverlay(LocationTag tag) {
@@ -258,10 +293,8 @@ public class MapFragment extends Fragment {
         TextView tvAddress = (TextView) rlOverlay.findViewById(R.id.tvAddress);
         if (tag.address == null) {
             tvAddress.setText("");
-            tvAddress.setVisibility(View.GONE);
         } else {
             tvAddress.setText(tag.getAddressInfo());
-            tvAddress.setVisibility(View.VISIBLE);
         }
 
         rlOverlay.setVisibility(View.VISIBLE);

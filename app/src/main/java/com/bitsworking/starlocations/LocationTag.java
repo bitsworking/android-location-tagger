@@ -57,21 +57,29 @@ public class LocationTag {
         }
 
         String ret = "";
-        if (address.getMaxAddressLineIndex() > 0) ret += address.getAddressLine(0) + "\n";
-        if (address.getLocality() != null) ret += address.getLocality() + "\n";
-        if (address.getAdminArea() != null) ret += address.getAdminArea() + "\n";
-        if (address.getSubAdminArea() != null) ret += address.getSubAdminArea() + "\n";
-        ret += address.getCountryName();
+        for (int i=0; i<=address.getMaxAddressLineIndex(); i++) {
+            ret += address.getAddressLine(i) + "\n";
+        }
 
+//        if (address.getMaxAddressLineIndex() > 0) ret += address.getAddressLine(0) + "\n";
+//        if (address.getLocality() != null) ret += address.getLocality() + "\n";
+//        if (address.getAdminArea() != null) ret += address.getAdminArea() + "\n";
+//        if (address.getSubAdminArea() != null) ret += address.getSubAdminArea() + "\n";
+//        ret += address.getCountryName();
 
-        return ret;
+        return ret.trim();
     }
 
     public Intent getShareIntent() {
+        String text = "http://maps.google.com?q=" + latLng.latitude + "," + latLng.longitude;
+        if (address != null) {
+            text += "\n\n" + getAddressInfo();
+        }
+
         Intent i = new Intent(Intent.ACTION_SEND);
         i.setType("text/plain");
         i.putExtra(Intent.EXTRA_SUBJECT, "Location Tag");
-        i.putExtra(Intent.EXTRA_TEXT, "http://maps.google.com?q=" + latLng.latitude + "," + latLng.longitude);
+        i.putExtra(Intent.EXTRA_TEXT, text);
         return i;
     }
 }
