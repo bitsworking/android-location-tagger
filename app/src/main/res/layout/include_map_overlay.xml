@@ -22,13 +22,49 @@
         android:id="@+id/tvClose" />
 
     <!-- Location info field -->
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Lat: 48.20631382\nLng: 16.39044"
-        android:padding="10dp"
+        android:text="Coordinates"
+        android:textStyle="bold"
+        android:paddingLeft="10dp"
+        android:id="@+id/tvCoordsHeader" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvCoordsHeader"
+        android:paddingLeft="10dp"
+        android:id="@+id/tvLatitude"
+
+        android:text="Latitude: 48.20631382123123213123123"
+        android:singleLine="true"
         android:maxWidth="140dp"
-        android:id="@+id/infoField" />
+        android:ellipsize="end" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvLatitude"
+        android:paddingLeft="10dp"
+        android:id="@+id/tvLongitude"
+
+        android:text="Latitude: 48.20631382123123213123123"
+        android:singleLine="true"
+        android:maxWidth="140dp"
+        android:ellipsize="end" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvLongitude"
+        android:paddingLeft="10dp"
+        android:paddingTop="10dp"
+        android:id="@+id/tvAddress"
+        android:text="Address: ABC"
+        android:visibility="gone"
+        />
 
 
     <!--<TextView-->
@@ -41,9 +77,9 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toEndOf="@id/infoField"
-        android:layout_toRightOf="@id/infoField"
-        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@id/tvCoordsHeader"
+        android:layout_marginRight="40dp"
         android:text="Save"
         android:id="@+id/btnSave"
         android:textSize="14sp"
@@ -52,22 +88,9 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toEndOf="@id/btnSave"
-        android:layout_toRightOf="@id/btnSave"
-        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@id/btnSave"
         android:text="Share"
         android:id="@+id/btnShare"
-        android:textSize="14sp"
-        />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toEndOf="@id/btnShare"
-        android:layout_toRightOf="@id/btnShare"
-        android:layout_centerVertical="true"
-        android:text="Close"
-        android:id="@+id/btnClose"
         android:textSize="14sp"
         />
 

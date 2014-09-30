@@ -44,13 +44,24 @@ public class LocationTag {
         ret += "Lng: " + latLng.longitude;
 
         if (address != null) {
-            ret += "\n\n";
-            if (address.getMaxAddressLineIndex() > 0) ret += address.getAddressLine(0) + "\n";
-            if (address.getLocality() != null) ret += address.getLocality() + "\n";
-            if (address.getAdminArea() != null) ret += address.getAdminArea() + "\n";
-            if (address.getSubAdminArea() != null) ret += address.getSubAdminArea() + "\n";
-            ret += address.getCountryName();
+            ret += "\n\n" + getAddressInfo();
         }
+
+        return ret;
+    }
+
+    public String getAddressInfo() {
+        if (address != null) {
+            return null;
+        }
+
+        String ret = "";
+        if (address.getMaxAddressLineIndex() > 0) ret += address.getAddressLine(0) + "\n";
+        if (address.getLocality() != null) ret += address.getLocality() + "\n";
+        if (address.getAdminArea() != null) ret += address.getAdminArea() + "\n";
+        if (address.getSubAdminArea() != null) ret += address.getSubAdminArea() + "\n";
+        ret += address.getCountryName();
+
 
         return ret;
     }

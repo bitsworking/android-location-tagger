@@ -86,7 +86,7 @@ public class MapFragment extends Fragment {
             }
         });
 
-        ((Button) rlOverlay.findViewById(R.id.btnClose)).setOnClickListener(new View.OnClickListener() {
+        ((TextView) rlOverlay.findViewById(R.id.tvClose)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (lastTempMarker != null) {
@@ -234,11 +234,27 @@ public class MapFragment extends Fragment {
 
     private void showLocationOverlay(LocationTag tag) {
         overlayLocationTag = tag;
-        ((TextView) rlOverlay.findViewById(R.id.infoField)).setText(tag.getMarkerSnippet());
+
+        ((TextView) rlOverlay.findViewById(R.id.tvLatitude)).setText(String.valueOf(tag.latLng.latitude));
+        ((TextView) rlOverlay.findViewById(R.id.tvLongitude)).setText(String.valueOf(tag.latLng.longitude));
+
+        TextView tvAddress = (TextView) rlOverlay.findViewById(R.id.tvAddress);
+        if (tag.address == null) {
+            tvAddress.setText("");
+            tvAddress.setVisibility(View.GONE);
+        } else {
+            tvAddress.setText(tag.getAddressInfo());
+            tvAddress.setVisibility(View.VISIBLE);
+        }
+
         rlOverlay.setVisibility(View.VISIBLE);
     }
 
-    private void closeOverlay() {
+    public void closeOverlay() {
         rlOverlay.setVisibility(View.GONE);
+    }
+
+    public boolean isOverlayVisible() {
+        return rlOverlay.getVisibility() == View.VISIBLE;
     }
 }

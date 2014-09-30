@@ -154,10 +154,13 @@ public class MainActivity extends Activity
         super.onPause();  // Always call the superclass method first
     }
 
-    @Override
-    public boolean onSearchRequested() {
-        Log.v(TAG, "onSearchRequested");
-        return super.onSearchRequested();
+    public void onBackPressed(){
+        // do something here and don't write super.onBackPressed()
+        if (fragment_attached == FRAGMENT_MAP && mMapFragment.isOverlayVisible()) {
+            mMapFragment.closeOverlay();
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
