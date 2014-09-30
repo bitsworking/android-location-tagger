@@ -1,12 +1,23 @@
 package com.bitsworking.starlocations;
 
+import android.content.Context;
 import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
+import android.util.Log;
+
+import com.bitsworking.starlocations.exceptions.InvalidLocationException;
+import com.google.android.gms.maps.model.LatLng;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by chris on 28/09/2014.
  */
 public class Tools {
+    private static final String TAG = "Tools";
     private static final int TWO_MINUTES = 1000 * 60 * 2;
 
     // TODO Later: refactor to use common location class
@@ -71,5 +82,34 @@ public class Tools {
             return provider2 == null;
         }
         return provider1.equals(provider2);
+    }
+
+    public static Address geocodeLocationNameToAddress(Context context, String locationName) throws IOException, InvalidLocationException {
+        Geocoder geocoder = new Geocoder(context);
+        List<Address> addresses = geocoder.getFromLocationName(locationName, 1);
+        if (addresses.size() == 0) {
+            throw new InvalidLocationException();
+        }
+        return addresses.get(0);
+    }
+
+    public static Address geocodeCoordinatesToAddress(Context context, LatLng coordinates) throws IOException, InvalidLocationException {
+        Geocoder geocoder = new Geocoder(context);
+        List<Address> addresses = geocoder.getFromLocation(coordinates.latitude, coordinates.longitude, 1);
+        if (addresses.size() == 0) {
+            throw new InvalidLocationException();
+        }
+        return addresses.get(0);
+    }
+
+    // Returns true if query string appears to be GPS coordinates
+    public static LatLng getLatLngFromQuery(String query) {
+        String[] parts = query.trim().split(query.contains(",") ? "," : ";");
+        if (parts.length == 2) {
+            try {
+                return new LatLng(Double.valueOf(parts[0]), Double.valueOf(parts[1]));
+            } catch (NumberFormatException e) {}
+        }
+        return null;
     }
 }

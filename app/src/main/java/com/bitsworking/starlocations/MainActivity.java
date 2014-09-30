@@ -9,6 +9,7 @@ import android.app.FragmentTransaction;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Address;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -25,6 +26,8 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 import com.bitsworking.starlocations.contentproviders.MySearchRecentSuggestionsProvider;
+import com.bitsworking.starlocations.exceptions.InvalidLocationException;
+import com.bitsworking.starlocations.exceptions.NoCoordinatesException;
 import com.bitsworking.starlocations.fragments.InfoFragment;
 import com.bitsworking.starlocations.fragments.ListFragment;
 import com.bitsworking.starlocations.fragments.MapFragment;
@@ -375,6 +378,15 @@ public class MainActivity extends Activity
         return resultList;
     }
 
+    /**
+     * `handleSearch` handles any custom search query by user input.
+     * Typically this is either GPS coordinates or a location name.
+     *
+     * This method creates a LocationTag with the coordinates, in
+     * case of a location name after geocoding the name to coordinates.
+     *
+     * @param query
+     */
     private void handleSearch(final String query) {
         Log.v(TAG, "handleSearch: " + query);
 
@@ -387,14 +399,31 @@ public class MainActivity extends Activity
         Thread thread = new Thread() {
             @Override
             public void run() {
-                LocationTag tag = null;
-                try {
-                    tag = LocationTag.fromLocationQuery(getBaseContext(), query);
-                    mMapFragment.handleSearchResult(tag);
-                } catch (LocationTag.NoCoordinatesException e) {
-                    e.printStackTrace();
-                    Toast.makeText(getBaseContext(), "Could not get a location for query: " + query, Toast.LENGTH_LONG).show();
+                // See if we can get GPS coordinates from this query
+                LatLng coords = Tools.getLatLngFromQuery(query);
+                Address address = null;
+
+                // If not, try geocoding the location name
+                if (coords == null) {
+                    try {
+                        address = Tools.geocodeLocationNameToAddress(getBaseContext(), query);
+                        coords = new LatLng(address.getLatitude(), address.getLongitude());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return;
+                    } catch (InvalidLocationException e) {
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getBaseContext(), "Could not find " + query, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                        return;
+                    }
                 }
+
+                LocationTag tag = new LocationTag(coords, query, address);
+                mMapFragment.handleSearchResult(tag);
             }
         };
         thread.start();

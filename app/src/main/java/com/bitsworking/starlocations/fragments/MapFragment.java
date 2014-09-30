@@ -35,7 +35,7 @@ public class MapFragment extends Fragment {
     private Handler mHandler = new Handler();
 
     private Marker lastTempMarker;
-    private LatLng lastTempLatLng;
+    private LocationTag lastLocationTag;
 
     public MapFragment() {
         setRetainInstance(true);
@@ -119,23 +119,11 @@ public class MapFragment extends Fragment {
                 if (mLastKnownLocation == null) {
                     Toast.makeText(getActivity(), "Waiting for location...", Toast.LENGTH_LONG).show();
                     return false;
-//                    if (lastUnsafeLocation == null) {
-//                    } else {
-//                        // Uncertain last known position
-//                        Toast.makeText(getActivity(), "Found helper location...", Toast.LENGTH_LONG).show();
-//                        mLastKnownLocation = lastUnsafeLocation;
-//                    }
                 }
 
-                (new Thread() {
-                    @Override
-                    public void run() {
-                        LocationTag tag = LocationTag.fromCoordinates(getActivity(), new LatLng(
-                                mLastKnownLocation.getLatitude(),
-                                mLastKnownLocation.getLongitude()), false);
-                        handleSearchResult(tag);
-                    }
-                }).start();
+                addTempMarker(new LocationTag(new LatLng(
+                        mLastKnownLocation.getLatitude(),
+                        mLastKnownLocation.getLongitude())));
 
                 return false;
             }
@@ -144,42 +132,68 @@ public class MapFragment extends Fragment {
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
-                LocationTag tag = LocationTag.fromCoordinates(getActivity(), latLng, false);
-                handleSearchResult(tag);
+                addTempMarker(new LocationTag(latLng));
+            }
+        });
+
+        mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDragStart(Marker marker) {}
+
+            @Override
+            public void onMarkerDrag(Marker marker) {}
+
+            @Override
+            public void onMarkerDragEnd(Marker marker) {
+//                Toast.makeText(getActivity(), "Marker drag end", Toast.LENGTH_LONG).show();
+                addTempMarker(new LocationTag(marker.getPosition()));
+            }
+        });
+
+        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+                Toast.makeText(getActivity(), "Info Window Clicked", Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    public void handleSearchResult(final LocationTag location) {
-        Log.v(TAG, "searching for " + location);
-        if (location == null) {
+    // Add temporary marker for LocationTag on the UI thread
+    public void handleSearchResult(final LocationTag tag) {
+        Log.v(TAG, "handleSearchResult: " + tag);
+        if (tag == null) {
             return;
         }
 
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                lastTempLatLng = location.getCoordinates();
-
-                MarkerOptions markerOptions = new MarkerOptions();
-                markerOptions.position(lastTempLatLng);
-                markerOptions.draggable(true);
-                markerOptions.title(location.getSearchParams().getQuery());
-
-                if (location.getAddress() != null) {
-                    markerOptions.snippet(location.getAddress().toString().replace(",", "\n"));
-                }
-
-                if (lastTempMarker != null) {
-                    lastTempMarker.remove();
-                }
-
-                lastTempMarker = mMap.addMarker(markerOptions);
-                lastTempMarker.showInfoWindow();
-
-
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastTempLatLng, mMap.getCameraPosition().zoom));
+                addTempMarker(tag);
             }
         });
+    }
+
+    public void addTempMarker(LocationTag tag) {
+        // Remember this LocationTag
+        lastLocationTag = tag;
+
+        // Remove old marker
+        if (lastTempMarker != null) {
+            lastTempMarker.remove();
+        }
+
+        // Build new marker
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(tag.latLng);
+        markerOptions.draggable(true);
+        markerOptions.title(tag.getMarkerTitle());
+        markerOptions.snippet(tag.getMarkerSnippet());
+
+        // Add marker, show info window
+        lastTempMarker = mMap.addMarker(markerOptions);
+        lastTempMarker.showInfoWindow();
+
+        // Animate to marker
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(tag.latLng, mMap.getCameraPosition().zoom));
     }
 }
