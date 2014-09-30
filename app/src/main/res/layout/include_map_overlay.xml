@@ -1,0 +1,74 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/rlOverlay"
+    android:padding="10dp"
+    android:layout_alignParentBottom="true"
+    android:background="#BBFFFFFF">
+
+    <!-- X mark to close overlay -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="X"
+        android:textStyle="bold"
+        android:textSize="20dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:paddingRight="10dp"
+        android:paddingLeft="10dp"
+        android:paddingBottom="10dp"
+        android:id="@+id/tvClose" />
+
+    <!-- Location info field -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lat: 48.20631382\nLng: 16.39044"
+        android:padding="10dp"
+        android:maxWidth="140dp"
+        android:id="@+id/infoField" />
+
+
+    <!--<TextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_below="@id/tvCoords"-->
+        <!--android:text="Address: asd asd asd asd asd asd asdq w dwdwqwqd qwd wqdqw dwq dqwd qw dqwdwqqwd"-->
+        <!--android:id="@+id/tvAddress" />-->
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/infoField"
+        android:layout_toRightOf="@id/infoField"
+        android:layout_centerVertical="true"
+        android:text="Save"
+        android:id="@+id/btnSave"
+        android:textSize="14sp"
+        />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/btnSave"
+        android:layout_toRightOf="@id/btnSave"
+        android:layout_centerVertical="true"
+        android:text="Share"
+        android:id="@+id/btnShare"
+        android:textSize="14sp"
+        />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/btnShare"
+        android:layout_toRightOf="@id/btnShare"
+        android:layout_centerVertical="true"
+        android:text="Close"
+        android:id="@+id/btnClose"
+        android:textSize="14sp"
+        />
+
+</RelativeLayout>

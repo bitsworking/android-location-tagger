@@ -7,8 +7,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,12 +36,15 @@ public class MapFragment extends Fragment {
 
     private MapView mMapView;
     private static GoogleMap mMap;
+    private RelativeLayout rlOverlay;
 
 //    private Location mLastKnownLocation;
     private Handler mHandler = new Handler();
 
     private Marker lastTempMarker;
     private HashMap<String, LocationTag> markerLocationTags = new HashMap<String, LocationTag>();
+
+    private LocationTag overlayLocationTag = null;
 
     public MapFragment() {
         setRetainInstance(true);
@@ -69,6 +75,26 @@ public class MapFragment extends Fragment {
 
         setUpMap();
 
+        // Handle overlay touch
+        rlOverlay = (RelativeLayout) rootView.findViewById(R.id.rlOverlay);
+        rlOverlay.setVisibility(View.GONE);
+        rlOverlay.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                // Stop from propagating to mapview
+                return true;
+            }
+        });
+
+        ((Button) rlOverlay.findViewById(R.id.btnClose)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (lastTempMarker != null) {
+                    lastTempMarker.showInfoWindow();
+                }
+                closeOverlay();
+            }
+        });
         return rootView;
     }
 
@@ -76,7 +102,6 @@ public class MapFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         Log.v(TAG, "onAttach");
-//        ((MainActivity) activity).onSectionAttached(Constants.FRAGMENT_MAP);
     }
 
 
@@ -132,7 +157,9 @@ public class MapFragment extends Fragment {
 
         mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
-            public void onMarkerDragStart(Marker marker) {}
+            public void onMarkerDragStart(Marker marker) {
+                marker.hideInfoWindow();
+            }
 
             @Override
             public void onMarkerDrag(Marker marker) {}
@@ -147,7 +174,8 @@ public class MapFragment extends Fragment {
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
-                Toast.makeText(getActivity(), "Info Window Clicked", Toast.LENGTH_LONG).show();
+                marker.hideInfoWindow();
+                showLocationOverlay(markerLocationTags.get(marker.getId()));
             }
         });
 
@@ -187,6 +215,8 @@ public class MapFragment extends Fragment {
             lastTempMarker.remove();
         }
 
+        closeOverlay();
+
         // Build new marker
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(tag.latLng);
@@ -200,5 +230,15 @@ public class MapFragment extends Fragment {
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(tag.latLng, zoom));
 
         lastTempMarker.showInfoWindow();
+    }
+
+    private void showLocationOverlay(LocationTag tag) {
+        overlayLocationTag = tag;
+        ((TextView) rlOverlay.findViewById(R.id.infoField)).setText(tag.getMarkerSnippet());
+        rlOverlay.setVisibility(View.VISIBLE);
+    }
+
+    private void closeOverlay() {
+        rlOverlay.setVisibility(View.GONE);
     }
 }
