@@ -20,7 +20,7 @@ public class LocationTag {
     private final static String TAG = "LocationTag";
 
     private LatLng latLng = null; // should always be populated
-    public String title = null;
+    public String title = "";
 
     public String locationHash = null;  // Hash representing the location
 
@@ -60,6 +60,7 @@ public class LocationTag {
     public String toString() {
         return "LocationTag{" +
                 "hash=" + locationHash + ", " +
+                "title=" + title + ", " +
                 "latLng=" + latLng + ", " +
                 "mSearchParams=" + searchQuery + ", " +
                 "address=" + address +
@@ -68,6 +69,10 @@ public class LocationTag {
 
     public String getMarkerSnippet() {
         String ret = "";
+        if (title != null && !title.isEmpty()) {
+            ret += title + "\n\n";
+        }
+
         ret += "Lat: " + latLng.latitude + "\n";
         ret += "Lng: " + latLng.longitude;
 

@@ -92,12 +92,13 @@
         android:layout_marginRight="10dp"
         android:layout_below="@id/rlCoords"
         android:textSize="14sp"
-        android:id="@+id/editText" />
+        android:singleLine="true"
+        android:id="@+id/etTitle" />
 
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/editText"
+        android:layout_below="@id/etTitle"
         android:id="@+id/rlActions" >
 
         <Button

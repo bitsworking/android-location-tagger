@@ -12,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -109,9 +110,10 @@ public class MapFragment extends Fragment {
         ((Button) rlOverlay.findViewById(R.id.btnSave)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) getActivity()).saveLocationTag(overlayLocationTag);
+                overlayLocationTag.title = ((EditText) rlOverlay.findViewById(R.id.etTitle)).getText().toString();
                 addMarker(overlayLocationTag);
                 delTempMarker();
+                ((MainActivity) getActivity()).saveLocationTag(overlayLocationTag);
             }
         });
 
@@ -296,10 +298,12 @@ public class MapFragment extends Fragment {
     }
 
     private void showLocationOverlay(LocationTag tag) {
+        Log.v(TAG, "showOverlay: " + tag.toString());
         overlayLocationTag = tag;
 
         ((TextView) rlOverlay.findViewById(R.id.tvLatitude)).setText(String.valueOf(tag.getLatLng().latitude));
         ((TextView) rlOverlay.findViewById(R.id.tvLongitude)).setText(String.valueOf(tag.getLatLng().longitude));
+        ((EditText) rlOverlay.findViewById(R.id.etTitle)).setText(tag.title);
 
         TextView tvAddress = (TextView) rlOverlay.findViewById(R.id.tvAddress);
         if (tag.address == null) {
