@@ -21,10 +21,12 @@ import com.bitsworking.starlocations.MainActivity;
 import com.bitsworking.starlocations.R;
 import com.bitsworking.starlocations.Tools;
 import com.bitsworking.starlocations.exceptions.InvalidLocationException;
+import com.bitsworking.starlocations.jsondb.LocationTagDatabase;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -49,6 +51,7 @@ public class MapFragment extends Fragment {
     private HashMap<String, LocationTag> markerLocationTags = new HashMap<String, LocationTag>();
 
     private LocationTag overlayLocationTag = null;
+    private LocationTagDatabase mLocationTagDatabase;
 
     public MapFragment() {
         setRetainInstance(true);
@@ -69,6 +72,9 @@ public class MapFragment extends Fragment {
                              Bundle savedInstanceState) {
         Log.v(TAG, "onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_map, container, false);
+
+        // Acquire reference to location tag database
+        mLocationTagDatabase = ((MainActivity) getActivity()).getLocationTagDatabase();
 
         mMapView = (MapView) rootView.findViewById(R.id.mapView);
         Log.v(TAG, "Setting up mMapView");
@@ -110,7 +116,9 @@ public class MapFragment extends Fragment {
         ((Button) rlOverlay.findViewById(R.id.btnSave)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                saveLocationTag(overlayLocationTag);
+                ((MainActivity) getActivity()).saveLocationTag(overlayLocationTag);
+                addMarker(overlayLocationTag);
+                delTempMarker();
             }
         });
 
@@ -206,17 +214,27 @@ public class MapFragment extends Fragment {
 
             @Override
             public View getInfoContents(Marker marker) {
-                LocationTag tag = markerLocationTags.get(marker.getId());
-
                 TextView tv = new TextView(getActivity());
                 tv.setPadding(10, 10, 10, 10);
                 tv.setSingleLine(false);
-                tv.setText(tag.getMarkerSnippet());
+
+                if (markerLocationTags.containsKey(marker.getId())) {
+                    LocationTag tag = markerLocationTags.get(marker.getId());
+                    tv.setText(tag.getMarkerSnippet());
+                }
+
                 return tv;
             }
         };
 
         mMap.setInfoWindowAdapter(customInfoWindowAdapter);
+
+        // Add saved markers
+        for (int i=0; i<mLocationTagDatabase.numItems(); i++) {
+            LocationTag tag = mLocationTagDatabase.get(i);
+            Log.v(TAG, "Got saved tag: " + tag.toString());
+            addMarker(tag);
+        }
 
         // Initial positining
         Location lastKnownLocation = ((MainActivity) getActivity()).getLocation();
@@ -227,18 +245,20 @@ public class MapFragment extends Fragment {
         addTempMarker(tag, mMap.getCameraPosition().zoom);
     }
 
-    public void addTempMarker(final LocationTag tag, float zoom) {
-        // Remove old marker
+    public void delTempMarker() {
         if (lastTempMarker != null) {
             markerLocationTags.remove(lastTempMarker.getId());
             lastTempMarker.remove();
         }
+    }
 
+    public void addTempMarker(final LocationTag tag, float zoom) {
+        delTempMarker();
         closeOverlay();
 
         // Build new marker
         MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(tag.latLng);
+        markerOptions.position(tag.getLatLng());
         markerOptions.draggable(true);
 
         // Add marker, show info window
@@ -246,7 +266,7 @@ public class MapFragment extends Fragment {
         markerLocationTags.put(lastTempMarker.getId(), tag);
 
         // Animate to marker
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(tag.latLng, zoom));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(tag.getLatLng(), zoom));
 
         lastTempMarker.showInfoWindow();
         ((MainActivity) getActivity()).setShareActionIntent(tag.getShareIntent());
@@ -257,7 +277,7 @@ public class MapFragment extends Fragment {
                 @Override
                 public void run() {
                     try {
-                        tag.address = Tools.geocodeCoordinatesToAddress(getActivity(), tag.latLng);
+                        tag.address = Tools.geocodeCoordinatesToAddress(getActivity(), tag.getLatLng());
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -287,8 +307,8 @@ public class MapFragment extends Fragment {
     private void showLocationOverlay(LocationTag tag) {
         overlayLocationTag = tag;
 
-        ((TextView) rlOverlay.findViewById(R.id.tvLatitude)).setText(String.valueOf(tag.latLng.latitude));
-        ((TextView) rlOverlay.findViewById(R.id.tvLongitude)).setText(String.valueOf(tag.latLng.longitude));
+        ((TextView) rlOverlay.findViewById(R.id.tvLatitude)).setText(String.valueOf(tag.getLatLng().latitude));
+        ((TextView) rlOverlay.findViewById(R.id.tvLongitude)).setText(String.valueOf(tag.getLatLng().longitude));
 
         TextView tvAddress = (TextView) rlOverlay.findViewById(R.id.tvAddress);
         if (tag.address == null) {
@@ -318,7 +338,10 @@ public class MapFragment extends Fragment {
         return rlOverlay.getVisibility() == View.VISIBLE;
     }
 
-    private void saveLocationTag(LocationTag locationTag) {
-
+    public void addMarker(final LocationTag tag) {
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(tag.getLatLng());
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+        mMap.addMarker(markerOptions);
     }
 }

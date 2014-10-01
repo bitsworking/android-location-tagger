@@ -28,7 +28,7 @@ import com.bitsworking.starlocations.fragments.InfoFragment;
 import com.bitsworking.starlocations.fragments.ListFragment;
 import com.bitsworking.starlocations.fragments.MapFragment;
 import com.bitsworking.starlocations.fragments.NavigationDrawerFragment;
-import com.bitsworking.starlocations.jsondb.LocationDatabase;
+import com.bitsworking.starlocations.jsondb.LocationTagDatabase;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
@@ -75,7 +75,7 @@ public class MainActivity extends Activity
     private int fragment_attached = -1;
     private Fragment mLastFragment;
 
-    private LocationDatabase mLocationDatabase;
+    private LocationTagDatabase mLocationTagDatabase;
     private boolean gps_enabled = false;
     private boolean network_enabled = false;
 
@@ -96,6 +96,8 @@ public class MainActivity extends Activity
 
         // Acquire a reference to the system Location Manager
         mLocationManager = (LocationManager) getSystemService(Activity.LOCATION_SERVICE);
+
+        mLocationTagDatabase = new LocationTagDatabase(this);
 
         // Get the intent, verify the action and get the query
         handleIntent(getIntent());
@@ -144,9 +146,8 @@ public class MainActivity extends Activity
         if (network_enabled)
             mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
 
-        mLocationDatabase = new LocationDatabase(this);
 //        mLocationDatabase.save();
-        Toast.makeText(this, "DB: " + mLocationDatabase.numItems() + " items", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "DB: " + mLocationTagDatabase.numItems() + " items", Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -430,5 +431,14 @@ public class MainActivity extends Activity
 
         // Show Map Fragment
         mNavigationDrawerFragment.selectItem(FRAGMENT_MAP);
+    }
+
+    public void saveLocationTag(LocationTag tag) {
+        mLocationTagDatabase.put(tag);
+        mLocationTagDatabase.save();
+    }
+
+    public LocationTagDatabase getLocationTagDatabase() {
+        return mLocationTagDatabase;
     }
 }

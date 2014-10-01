@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.util.Log;
 
 import com.bitsworking.starlocations.Constants;
+import com.bitsworking.starlocations.LocationTag;
 import com.bitsworking.starlocations.Tools;
 
 import org.json.JSONArray;
@@ -24,15 +25,17 @@ import java.io.IOException;
  *
  * Created by Chris Hager <chris@linuxuser.at> on 01/10/14.
  */
-public class LocationDatabase {
-    private final String TAG = "LocationDatabase";
+public class LocationTagDatabase {
+    private final String TAG = "LocationTagDatabase";
+
     static final int VERSION_DB_SCHEMA = 1;
-    private String appVersionName;
     private final boolean DEBUG_REBUILD_DB = false;
+
+    private String appVersionName;
 
     private JSONObject root;
 
-    public LocationDatabase(Context context) {
+    public LocationTagDatabase(Context context) {
         // Remember the app version name to put in db
         try {
             PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
@@ -134,6 +137,27 @@ public class LocationDatabase {
         } catch (JSONException e) {
             e.printStackTrace();
             return 0;
+        }
+    }
+
+    public void put(LocationTag tag) {
+        try {
+            JSONArray locations = root.getJSONArray("locations");
+            locations.put(tag.toJSONObject());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Log.v(TAG, "added locationTag " + tag);
+        Log.v(TAG, "DB: " + root.toString());
+    }
+
+    public LocationTag get(int index) {
+        try {
+            JSONArray locations = root.getJSONArray("locations");
+            return LocationTag.fromJSON(locations.getJSONObject(index));
+        } catch (JSONException e) {
+            e.printStackTrace();
+            throw new IndexOutOfBoundsException();
         }
     }
 }
