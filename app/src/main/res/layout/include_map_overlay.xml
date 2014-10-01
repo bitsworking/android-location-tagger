@@ -22,75 +22,111 @@
         android:id="@+id/tvClose" />
 
     <!-- Location info field -->
-
-    <TextView
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Coordinates"
-        android:textStyle="bold"
         android:paddingLeft="10dp"
-        android:id="@+id/tvCoordsHeader" />
+        android:id="@+id/rlCoords" >
 
-    <TextView
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Coordinates"
+            android:textStyle="bold"
+            android:id="@+id/tvCoordsHeader" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvCoordsHeader"
+            android:id="@+id/tvLatitude"
+
+            android:text="Latitude: 48.20631382123123213123123"
+            android:singleLine="true"
+            android:maxWidth="140dp"
+            android:ellipsize="end" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvLatitude"
+            android:id="@+id/tvLongitude"
+
+            android:text="Latitude: 48.20631382123123213123123"
+            android:singleLine="true"
+            android:maxWidth="140dp"
+            android:ellipsize="end" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tvCoordsHeader"
-        android:paddingLeft="10dp"
-        android:id="@+id/tvLatitude"
+        android:layout_toRightOf="@id/rlCoords"
+        android:paddingLeft="40dp"
+        android:id="@+id/rlAddress" >
 
-        android:text="Latitude: 48.20631382123123213123123"
-        android:singleLine="true"
-        android:maxWidth="140dp"
-        android:ellipsize="end" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tvAddressHeader"
+            android:text="Address"
+            android:textStyle="bold"
+            />
 
-    <TextView
-        android:layout_width="wrap_content"
+       <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvAddressHeader"
+            android:id="@+id/tvAddress"
+            android:text="ABC"
+            />
+
+    </RelativeLayout>
+
+
+    <EditText
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tvLatitude"
-        android:paddingLeft="10dp"
-        android:id="@+id/tvLongitude"
-
-        android:text="Latitude: 48.20631382123123213123123"
-        android:singleLine="true"
-        android:maxWidth="140dp"
-        android:ellipsize="end" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/tvLongitude"
-        android:paddingLeft="10dp"
-        android:paddingTop="10dp"
-        android:id="@+id/tvAddress"
-        android:text="Address: ABC"
-        />
-
-
-    <!--<TextView-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_below="@id/tvCoords"-->
-        <!--android:text="Address: asd asd asd asd asd asd asdq w dwdwqwqd qwd wqdqw dwq dqwd qw dqwdwqqwd"-->
-        <!--android:id="@+id/tvAddress" />-->
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_alignTop="@id/tvCoordsHeader"
-        android:layout_marginRight="40dp"
-        android:text="Save"
-        android:id="@+id/btnSave"
+        android:hint="title (optional)"
+        android:layout_marginRight="10dp"
+        android:layout_below="@id/rlCoords"
         android:textSize="14sp"
-        />
+        android:id="@+id/editText" />
 
-    <Button
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toLeftOf="@id/btnSave"
-        android:text="Share"
-        android:id="@+id/btnShare"
-        android:textSize="14sp"
-        />
+        android:layout_below="@id/editText"
+        android:id="@+id/rlActions" >
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save"
+            android:id="@+id/btnSave"
+            />
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/btnSave"
+            android:text="Share"
+            android:id="@+id/btnShare"
+            />
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/btnShare"
+            android:text="Edit"
+            android:id="@+id/btnEdit"
+            android:enabled="false"
+            />
+
+    </RelativeLayout>
 
 </RelativeLayout>

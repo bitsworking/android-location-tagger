@@ -53,18 +53,11 @@ public class MapFragment extends Fragment {
     private LocationTag overlayLocationTag = null;
     private LocationTagDatabase mLocationTagDatabase;
 
-    public MapFragment() {
-        setRetainInstance(true);
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Log.v(TAG, "onCreate");
-
-        // Retain this fragment across configuration changes.
-        setRetainInstance(true);
     }
 
     @Override
@@ -193,7 +186,6 @@ public class MapFragment extends Fragment {
 
             @Override
             public void onMarkerDragEnd(Marker marker) {
-//                Toast.makeText(getActivity(), "Marker drag end", Toast.LENGTH_LONG).show();
                 addTempMarker(new LocationTag(marker.getPosition()));
             }
         });
@@ -201,7 +193,7 @@ public class MapFragment extends Fragment {
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
-                marker.hideInfoWindow();
+//                marker.hideInfoWindow();
                 showLocationOverlay(markerLocationTags.get(marker.getId()));
             }
         });
@@ -230,8 +222,7 @@ public class MapFragment extends Fragment {
         mMap.setInfoWindowAdapter(customInfoWindowAdapter);
 
         // Add saved markers
-        for (int i=0; i<mLocationTagDatabase.numItems(); i++) {
-            LocationTag tag = mLocationTagDatabase.get(i);
+        for (LocationTag tag : mLocationTagDatabase.getAll()) {
             Log.v(TAG, "Got saved tag: " + tag.toString());
             addMarker(tag);
         }
@@ -282,7 +273,7 @@ public class MapFragment extends Fragment {
                             @Override
                             public void run() {
                                 Log.v(TAG, "NEW ADDRESS: " + tag.address.toString());
-                                ((TextView) rlOverlay.findViewById(R.id.tvAddress)).setText(tag.getAddressInfo());
+                                ((TextView) rlOverlay.findViewById(R.id.tvAddress)).setText(tag.getAddressInfo(false));
 
                                 // Update Share Intent
                                 ((MainActivity) getActivity()).setShareActionIntent(tag.getShareIntent());
@@ -314,7 +305,7 @@ public class MapFragment extends Fragment {
         if (tag.address == null) {
             tvAddress.setText("");
         } else {
-            tvAddress.setText(tag.getAddressInfo());
+            tvAddress.setText(tag.getAddressInfo(false));
         }
 
         rlOverlay.setVisibility(View.VISIBLE);
@@ -342,6 +333,7 @@ public class MapFragment extends Fragment {
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(tag.getLatLng());
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
-        mMap.addMarker(markerOptions);
+        Marker marker = mMap.addMarker(markerOptions);
+        markerLocationTags.put(marker.getId(), tag);
     }
 }

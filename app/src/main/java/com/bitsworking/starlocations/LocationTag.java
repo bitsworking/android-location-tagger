@@ -32,10 +32,6 @@ public class LocationTag {
         this(coordinates, null, null);
     }
 
-//    public LocationTag(LatLng coordinates, String searchQuery) {
-//        this(coordinates, searchQuery, null);
-//    }
-
     public LatLng getLatLng() {
         return latLng;
     }
@@ -60,19 +56,6 @@ public class LocationTag {
         this.address = address;
     }
 
-    public static LocationTag fromJSON(JSONObject jsonObject) throws JSONException {
-        double lat = jsonObject.getDouble("latitude");
-        double lng = jsonObject.getDouble("longitude");
-
-        LocationTag tag = new LocationTag(new LatLng(lat, lng));
-
-        // Fill optional fields, do nothing
-        try { tag.title = jsonObject.getString("title"); } catch (JSONException e) {}
-        try { tag.searchQuery = jsonObject.getString("searchQuery"); } catch (JSONException e) {}
-
-        return tag;
-    }
-
     @Override
     public String toString() {
         return "LocationTag{" +
@@ -83,54 +66,40 @@ public class LocationTag {
                 '}';
     }
 
-    public JSONObject toJSONObject() {
-        JSONObject item = new JSONObject();
-        try {
-            item.put("hash", locationHash);
-            item.put("latitude", latLng.latitude);
-            item.put("longitude", latLng.longitude);
-            item.put("title", title);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return item;
-    }
-
     public String getMarkerSnippet() {
         String ret = "";
         ret += "Lat: " + latLng.latitude + "\n";
         ret += "Lng: " + latLng.longitude;
 
         if (address != null) {
-            ret += "\n\n" + getAddressInfo();
+            ret += "\n\n" + getAddressInfo(true);
         }
 
         return ret;
     }
 
-    public String getAddressInfo() {
+    public String getAddressInfo(boolean lineBreaks) {
         if (address == null) {
             return null;
         }
 
         String ret = "";
         for (int i=0; i<=address.getMaxAddressLineIndex(); i++) {
-            ret += address.getAddressLine(i) + "\n";
+            ret += address.getAddressLine(i);
+            ret += lineBreaks ? "\n" : ", ";
         }
 
-//        if (address.getMaxAddressLineIndex() > 0) ret += address.getAddressLine(0) + "\n";
-//        if (address.getLocality() != null) ret += address.getLocality() + "\n";
-//        if (address.getAdminArea() != null) ret += address.getAdminArea() + "\n";
-//        if (address.getSubAdminArea() != null) ret += address.getSubAdminArea() + "\n";
-//        ret += address.getCountryName();
-
+        if (!lineBreaks && ret.length() > 0) {
+            // remove trailing `, `
+            ret = ret.substring(0, ret.length() - 2);
+        }
         return ret.trim();
     }
 
     public Intent getShareIntent() {
         String text = "http://maps.google.com?q=" + latLng.latitude + "," + latLng.longitude;
         if (address != null) {
-            text += "\n\n" + getAddressInfo();
+            text += "\n\n" + getAddressInfo(true);
         }
 
         Intent i = new Intent(Intent.ACTION_SEND);
