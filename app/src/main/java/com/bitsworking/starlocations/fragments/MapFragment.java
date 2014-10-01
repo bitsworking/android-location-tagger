@@ -212,7 +212,7 @@ public class MapFragment extends Fragment {
                 // Check if we dragged a saved marker
                 LocationTag tag = markerLocationTags.get(marker.getId());
                 if (mLocationTagDatabase.contains(tag.uid)) {
-                    ((MainActivity) getActivity()).askToMoveSavedTag(tag);
+                    ((MainActivity) getActivity()).askToMoveSavedTag(tag, marker.getPosition());
                 } else {
                     // Else add/move this temporary marker
                     addTempMarker(new LocationTag(marker.getPosition()));

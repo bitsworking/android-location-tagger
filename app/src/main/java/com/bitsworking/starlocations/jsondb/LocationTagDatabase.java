@@ -177,8 +177,8 @@ public class LocationTagDatabase {
         return locationTags.size();
     }
 
-    public boolean contains(String hash) {
-        return locationTags.containsKey(hash);
+    public boolean contains(String uid) {
+        return locationTags.containsKey(uid);
     }
 
     // Add a LocationTag to the database
@@ -188,8 +188,8 @@ public class LocationTagDatabase {
     }
 
     // Get a LocationTag from the database by array index
-    public LocationTag get(String hash) {
-        return locationTags.get(hash);
+    public LocationTag get(String uid) {
+        return locationTags.get(uid);
     }
 
     public Collection<LocationTag> getAll() {
@@ -197,9 +197,9 @@ public class LocationTagDatabase {
     }
 
     // Remove
-    public void remove(String hash) {
-        locationTags.remove(hash);
-        Log.v(TAG, "removed locationTag " + hash);
+    public void remove(String uid) {
+        locationTags.remove(uid);
+        Log.v(TAG, "removed locationTag " + uid);
     }
 
     public void logDb() {

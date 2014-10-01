@@ -457,20 +457,27 @@ public class MainActivity extends Activity
         dialog.show();
     }
 
-    public void askToMoveSavedTag(final LocationTag tag) {
+    public void askToMoveSavedTag(final LocationTag tag, final LatLng newPosition) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Move saved marker?")
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        if (mLocationTagDatabase.contains(tag.uid)) {
-                            mLocationTagDatabase.remove(tag.uid);
-                            mLocationTagDatabase.save();
-                        }
+                        tag.setLatLng(newPosition);
+
+                        mLocationTagDatabase.put(tag);
+                        mLocationTagDatabase.save();
 
                         mMapFragment.removeMarker(tag.mapMarker);
+                        mMapFragment.addMarker(tag);
                     }
                 })
-                .setNegativeButton(R.string.cancel, null);
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mMapFragment.removeMarker(tag.mapMarker);
+                        mMapFragment.addMarker(tag);
+                    }
+                });
         AlertDialog dialog = builder.create();
         dialog.show();
     }
