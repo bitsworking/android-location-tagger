@@ -62,7 +62,7 @@ public class InfoFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-//        ((MainActivity) activity).onSectionAttached(Constants.FRAGMENT_INFO);
+//        ((MainActivity) activity).onSectionAttached(Constants.SECTION_SETTINGS);
     }
 
     public void useCurrentLocation(Location location) {

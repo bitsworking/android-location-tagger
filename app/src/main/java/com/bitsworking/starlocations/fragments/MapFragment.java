@@ -2,6 +2,7 @@ package com.bitsworking.starlocations.fragments;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -49,6 +50,8 @@ public class MapFragment extends Fragment {
 
     private LocationTag overlayLocationTag = null;
     private Marker lastTempMarker;
+
+    private Intent shareIntent = null;
 
     private HashMap<String, LocationTag> markerLocationTags = new HashMap<String, LocationTag>();
 
@@ -224,7 +227,7 @@ public class MapFragment extends Fragment {
             @Override
             public void onInfoWindowClick(Marker marker) {
 //                marker.hideInfoWindow();
-                showLocationOverlay(markerLocationTags.get(marker.getId()));
+                showOverlay(markerLocationTags.get(marker.getId()));
             }
         });
 
@@ -289,44 +292,53 @@ public class MapFragment extends Fragment {
 
         // Animate to marker
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(tag.getLatLng(), zoom));
-
         lastTempMarker.showInfoWindow();
-        ((MainActivity) getActivity()).setShareActionIntent(tag.getShareIntent());
 
         if (tag.address == null) {
             // Geocode: get address from coordinates
-            Thread thread = new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        tag.address = Tools.geocodeCoordinatesToAddress(getActivity(), tag.getLatLng());
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                Log.v(TAG, "NEW ADDRESS: " + tag.address.toString());
-                                ((TextView) rlOverlay.findViewById(R.id.tvAddress)).setText(tag.getAddressInfo(false));
+            geocodeNewMarker(tag);
+        }
 
-                                // Update Share Intent
-                                ((MainActivity) getActivity()).setShareActionIntent(tag.getShareIntent());
-
-                                // Update the marker info window with address, if its already opened
-                                if (lastTempMarker.isInfoWindowShown()) {
-                                    lastTempMarker.showInfoWindow();
-                                }
-                            }
-                        });
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (InvalidLocationException e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
-            thread.start();
+        // Update Share Intent if none set yet
+        if (shareIntent == null) {
+            shareIntent = tag.getShareIntent();
+            ((MainActivity) getActivity()).setShareActionIntent(shareIntent);
         }
     }
 
-    private void showLocationOverlay(LocationTag tag) {
+    public void geocodeNewMarker(final LocationTag tag) {
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    tag.address = Tools.geocodeCoordinatesToAddress(getActivity(), tag.getLatLng());
+                    Log.v(TAG, "NEW ADDRESS: " + tag.address.toString());
+
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Upadte overlay, if still about this marker
+                            if (isOverlayVisible() && overlayLocationTag.uid == tag.uid) {
+                                ((TextView) rlOverlay.findViewById(R.id.tvAddress)).setText(tag.getAddressInfo(false));
+                            }
+
+                            // Update the marker info window with address, if its already opened
+                            if (tag.mapMarker.isInfoWindowShown()) {
+                                tag.mapMarker.showInfoWindow();
+                            }
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InvalidLocationException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        thread.start();
+    }
+
+    public void showOverlay(LocationTag tag) {
         Log.v(TAG, "showOverlay: " + tag.toString());
         overlayLocationTag = tag;
 
@@ -344,24 +356,27 @@ public class MapFragment extends Fragment {
         rlOverlay.setVisibility(View.VISIBLE);
 
         // Get the intent again, perhaps we did geocoding or stuff
-        ((MainActivity) getActivity()).setShareActionIntent(tag.getShareIntent());
+        shareIntent = tag.getShareIntent();
+        ((MainActivity) getActivity()).setShareActionIntent(shareIntent);
     }
 
     public void closeOverlay() {
         if (!isOverlayVisible()) return;
         overlayLocationTag = null;
         rlOverlay.setVisibility(View.GONE);
+        shareIntent = null;
+        ((MainActivity) getActivity()).setShareActionIntent(shareIntent);
     }
 
     public boolean isOverlayVisible() {
         return rlOverlay.getVisibility() == View.VISIBLE;
     }
 
-    public void addMarker(final LocationTag tag) {
+    public void addMarker(LocationTag tag) {
         addMarker(tag, false);
     }
 
-    public void addMarker(final LocationTag tag, boolean showInfoWindow) {
+    public void addMarker(LocationTag tag, boolean showInfoWindow) {
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(tag.getLatLng());
         markerOptions.draggable(true);
@@ -372,6 +387,11 @@ public class MapFragment extends Fragment {
 
         if (showInfoWindow) {
             tag.mapMarker.showInfoWindow();
+        }
+
+        if (tag.address == null) {
+            // Geocode: get address from coordinates
+            geocodeNewMarker(tag);
         }
     }
 

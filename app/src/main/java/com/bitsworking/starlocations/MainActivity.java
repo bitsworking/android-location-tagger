@@ -14,6 +14,7 @@ import android.location.Address;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.SearchRecentSuggestions;
@@ -123,6 +124,18 @@ public class MainActivity extends Activity
             mSearchView.setIconified(true);
 
             handleSearch(query);
+
+        } else if (Intent.ACTION_SEND.equals(intent.getAction())) {
+            Log.v(TAG, "Send intent: " + intent);
+            String subject = intent.getStringExtra(Intent.EXTRA_SUBJECT);
+            String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+            Log.v(TAG, "- text: " + text);
+            parseLocationsFromText(text);
+
+        } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+            Log.v(TAG, "View intent: " + intent);
+            Log.v(TAG, "- data: " + intent.getDataString());
+            parseLocationsFromDataUri(intent.getData());
         }
     }
 
@@ -189,7 +202,7 @@ public class MainActivity extends Activity
                 fragment = mListFragment;
                 mTitle = getString(R.string.title_section1);
                 break;
-            case FRAGMENT_INFO:
+            case SECTION_SETTINGS:
                 fragment = mInfoFragment;
                 mTitle = getString(R.string.title_section2);
                 break;
@@ -301,7 +314,7 @@ public class MainActivity extends Activity
         mLastKnownLocation = location;
 
         // Let fragments know about better location
-        if (fragment_attached == FRAGMENT_INFO) {
+        if (fragment_attached == SECTION_SETTINGS) {
             mInfoFragment.newLastKnownLocation(location);
         }
     }
@@ -376,6 +389,7 @@ public class MainActivity extends Activity
         return resultList;
     }
 
+
     /**
      * `handleSearch` handles any custom search query by user input.
      * Typically this is either GPS coordinates or a location name.
@@ -387,11 +401,6 @@ public class MainActivity extends Activity
      */
     private void handleSearch(final String query) {
         Log.v(TAG, "handleSearch: " + query);
-
-        // Save to recent suggestions
-        SearchRecentSuggestions suggestions = new SearchRecentSuggestions(this,
-                MySearchRecentSuggestionsProvider.AUTHORITY, MySearchRecentSuggestionsProvider.MODE);
-        suggestions.saveRecentQuery(query, null);
 
         // Geocoding and shit in background thread
         Thread thread = new Thread() {
@@ -406,8 +415,14 @@ public class MainActivity extends Activity
                     try {
                         address = Tools.geocodeLocationNameToAddress(getBaseContext(), query);
                         coords = new LatLng(address.getLatitude(), address.getLongitude());
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         e.printStackTrace();
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getBaseContext(), "Error: " + e.toString(), Toast.LENGTH_LONG).show();
+                            }
+                        });
                         return;
                     } catch (InvalidLocationException e) {
                         mHandler.post(new Runnable() {
@@ -420,6 +435,12 @@ public class MainActivity extends Activity
                     }
                 }
 
+                // Successfully found coords. Save to recent suggestions.
+                SearchRecentSuggestions suggestions = new SearchRecentSuggestions(getBaseContext(),
+                        MySearchRecentSuggestionsProvider.AUTHORITY, MySearchRecentSuggestionsProvider.MODE);
+                suggestions.saveRecentQuery(query, null);
+
+                // Show on map
                 final LocationTag tag = new LocationTag(coords, query, address);
                 mHandler.post(new Runnable() {
                     @Override
@@ -469,6 +490,11 @@ public class MainActivity extends Activity
 
                         mMapFragment.removeMarker(tag.mapMarker);
                         mMapFragment.addMarker(tag);
+
+                        // Update overlay
+                        if (mMapFragment.isOverlayVisible()) {
+                            mMapFragment.showOverlay(tag);
+                        }
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -480,5 +506,13 @@ public class MainActivity extends Activity
                 });
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    private void parseLocationsFromText(String text) {
+        // TODO: random email / text
+    }
+
+    private void parseLocationsFromDataUri(Uri data) {
+        // TODO (geo:lat,lng?q=lat,lng
     }
 }
