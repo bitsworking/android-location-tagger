@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.bitsworking.starlocations.utils.SimpleHash;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,6 +28,9 @@ public class LocationTag {
     // Very likely null:
     public String searchQuery = null; // might be null
     public Address address = null;    // might be null
+
+    // Temporary reference to a Google Map Marker
+    public Marker mapMarker = null;
 
     public LocationTag(LatLng coordinates) {
         this(coordinates, null, null);

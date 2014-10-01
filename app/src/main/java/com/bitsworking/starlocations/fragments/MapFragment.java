@@ -45,14 +45,13 @@ public class MapFragment extends Fragment {
     private static GoogleMap mMap;
     private RelativeLayout rlOverlay;
 
-//    private Location mLastKnownLocation;
     private Handler mHandler = new Handler();
-
-    private Marker lastTempMarker;
-    private HashMap<String, LocationTag> markerLocationTags = new HashMap<String, LocationTag>();
+    private LocationTagDatabase mLocationTagDatabase;
 
     private LocationTag overlayLocationTag = null;
-    private LocationTagDatabase mLocationTagDatabase;
+    private Marker lastTempMarker;
+
+    private HashMap<String, LocationTag> markerLocationTags = new HashMap<String, LocationTag>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -110,10 +109,25 @@ public class MapFragment extends Fragment {
         ((Button) rlOverlay.findViewById(R.id.btnSave)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Update title info and replace marker
                 overlayLocationTag.title = ((EditText) rlOverlay.findViewById(R.id.etTitle)).getText().toString();
-                addMarker(overlayLocationTag);
+                addMarker(overlayLocationTag, true);
                 delTempMarker();
-                ((MainActivity) getActivity()).saveLocationTag(overlayLocationTag);
+
+                // Save to database
+                mLocationTagDatabase.put(overlayLocationTag);
+                mLocationTagDatabase.save();
+            }
+        });
+
+
+        // Remove button
+        ((Button) rlOverlay.findViewById(R.id.btnRemove)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.v(TAG, "XXX remove tag click " + overlayLocationTag);
+                removeLocationTag(overlayLocationTag);
+                closeOverlay();
             }
         });
 
@@ -177,6 +191,14 @@ public class MapFragment extends Fragment {
             }
         });
 
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                closeOverlay();
+                return false;
+            }
+        });
+
         mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
             public void onMarkerDragStart(Marker marker) {
@@ -234,15 +256,15 @@ public class MapFragment extends Fragment {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()), 8.0f));
     }
 
-    public void addTempMarker(LocationTag tag) {
-        addTempMarker(tag, mMap.getCameraPosition().zoom);
-    }
-
     public void delTempMarker() {
         if (lastTempMarker != null) {
             markerLocationTags.remove(lastTempMarker.getId());
             lastTempMarker.remove();
         }
+    }
+
+    public void addTempMarker(LocationTag tag) {
+        addTempMarker(tag, mMap.getCameraPosition().zoom);
     }
 
     public void addTempMarker(final LocationTag tag, float zoom) {
@@ -256,6 +278,7 @@ public class MapFragment extends Fragment {
 
         // Add marker, show info window
         lastTempMarker = mMap.addMarker(markerOptions);
+        tag.mapMarker = lastTempMarker;
         markerLocationTags.put(lastTempMarker.getId(), tag);
 
         // Animate to marker
@@ -322,11 +345,6 @@ public class MapFragment extends Fragment {
         if (!isOverlayVisible()) return;
         overlayLocationTag = null;
         rlOverlay.setVisibility(View.GONE);
-
-        // Show info window if marker, else remove share intent
-//        if (lastTempMarker != null) {
-//            lastTempMarker.showInfoWindow();
-//        }
     }
 
     public boolean isOverlayVisible() {
@@ -334,10 +352,36 @@ public class MapFragment extends Fragment {
     }
 
     public void addMarker(final LocationTag tag) {
+        addMarker(tag, false);
+    }
+
+    public void addMarker(final LocationTag tag, boolean showInfoWindow) {
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(tag.getLatLng());
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
-        Marker marker = mMap.addMarker(markerOptions);
-        markerLocationTags.put(marker.getId(), tag);
+
+        tag.mapMarker = mMap.addMarker(markerOptions);
+        markerLocationTags.put(tag.mapMarker.getId(), tag);
+
+        if (showInfoWindow) {
+            tag.mapMarker.showInfoWindow();
+        }
+    }
+
+    // Remove a locationtag / its marker
+    public void removeLocationTag(LocationTag tag) {
+        if (mLocationTagDatabase.contains(tag.locationHash)) {
+            // If its a saved marker, ask whether really to delete
+            ((MainActivity) getActivity()).askToDeleteTag(tag);
+
+        } else {
+            // If unsaved, then just remove
+            removeMarker(tag.mapMarker);
+        }
+    }
+
+    public void removeMarker(Marker marker) {
+        markerLocationTags.remove(marker.getId());
+        marker.remove();
     }
 }

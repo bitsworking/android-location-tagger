@@ -176,6 +176,10 @@ public class LocationTagDatabase {
         return locationTags.size();
     }
 
+    public boolean contains(String hash) {
+        return locationTags.containsKey(hash);
+    }
+
     // Add a LocationTag to the database
     public void put(LocationTag tag) {
         locationTags.put(tag.locationHash, tag);
@@ -191,7 +195,9 @@ public class LocationTagDatabase {
         return locationTags.values();
     }
 
-    public boolean contains(String hash) {
-        return locationTags.containsKey(hash);
+    // Remove
+    public void remove(String hash) {
+        locationTags.remove(hash);
+        Log.v(TAG, "removed locationTag " + hash);
     }
 }

@@ -13,4 +13,7 @@
     <string name="action_share">Share</string>
     <string name="search_hint">Location, GPS, ...</string>
 
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
+
 </resources>

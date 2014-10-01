@@ -123,9 +123,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toRightOf="@id/btnShare"
-            android:text="Edit"
-            android:id="@+id/btnEdit"
-            android:enabled="false"
+            android:text="Remove"
+            android:id="@+id/btnRemove"
             />
 
     </RelativeLayout>
