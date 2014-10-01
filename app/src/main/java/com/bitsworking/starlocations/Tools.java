@@ -2,9 +2,12 @@ package com.bitsworking.starlocations;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.Environment;
 import android.util.Log;
 
 import com.bitsworking.starlocations.exceptions.InvalidLocationException;
@@ -101,5 +104,24 @@ public class Tools {
             } catch (NumberFormatException e) {}
         }
         return null;
+    }
+
+    public static String getSdCardDirectory() {
+        return Environment.getExternalStorageDirectory().getAbsolutePath() + Constants.SD_DIRECTORY;
+    }
+
+    public static boolean isCallable(Context context, Intent intent) {
+        List<ResolveInfo> list = context.getPackageManager().queryIntentActivities(intent,
+                PackageManager.MATCH_DEFAULT_ONLY);
+        return list.size() > 0;
+    }
+
+    /* Checks if external storage is available for read and write */
+    public static boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
     }
 }

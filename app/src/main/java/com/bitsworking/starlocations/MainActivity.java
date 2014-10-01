@@ -28,6 +28,7 @@ import com.bitsworking.starlocations.fragments.InfoFragment;
 import com.bitsworking.starlocations.fragments.ListFragment;
 import com.bitsworking.starlocations.fragments.MapFragment;
 import com.bitsworking.starlocations.fragments.NavigationDrawerFragment;
+import com.bitsworking.starlocations.jsondb.LocationDatabase;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
@@ -74,6 +75,7 @@ public class MainActivity extends Activity
     private int fragment_attached = -1;
     private Fragment mLastFragment;
 
+    private LocationDatabase mLocationDatabase;
     private boolean gps_enabled = false;
     private boolean network_enabled = false;
 
@@ -141,6 +143,10 @@ public class MainActivity extends Activity
             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         if (network_enabled)
             mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+
+        mLocationDatabase = new LocationDatabase(this);
+//        mLocationDatabase.save();
+        Toast.makeText(this, "DB: " + mLocationDatabase.numItems() + " items", Toast.LENGTH_LONG).show();
     }
 
     @Override
