@@ -102,12 +102,13 @@ public class LocationTagDatabase {
                     double lat = j.getDouble("latitude");
                     double lng = j.getDouble("longitude");
                     LocationTag tag = new LocationTag(new LatLng(lat, lng));
+                    tag.uid = j.getString("uid");
 
                     // Fill optional fields, do nothing
                     try { tag.title = j.getString("title"); } catch (JSONException e) {}
                     try { tag.searchQuery = j.getString("searchQuery"); } catch (JSONException e) {}
 
-                    locationTags.put(tag.locationHash, tag);
+                    locationTags.put(tag.uid, tag);
                 }
 
                 Log.v(TAG, "Loaded db from file");
@@ -138,7 +139,7 @@ public class LocationTagDatabase {
 
             for (LocationTag tag : locationTags.values()) {
                 writer.beginObject();
-                writer.name("hash").value(tag.locationHash);
+                writer.name("uid").value(tag.uid);
                 writer.name("latitude").value(tag.getLatLng().latitude);
                 writer.name("longitude").value(tag.getLatLng().longitude);
                 writer.name("title").value(tag.title);
@@ -182,7 +183,7 @@ public class LocationTagDatabase {
 
     // Add a LocationTag to the database
     public void put(LocationTag tag) {
-        locationTags.put(tag.locationHash, tag);
+        locationTags.put(tag.uid, tag);
         Log.v(TAG, "added locationTag " + tag);
     }
 
@@ -199,5 +200,9 @@ public class LocationTagDatabase {
     public void remove(String hash) {
         locationTags.remove(hash);
         Log.v(TAG, "removed locationTag " + hash);
+    }
+
+    public void logDb() {
+        Log.v(TAG, locationTags.toString());
     }
 }

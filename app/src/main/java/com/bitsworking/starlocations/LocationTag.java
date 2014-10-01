@@ -2,14 +2,10 @@ package com.bitsworking.starlocations;
 
 import android.content.Intent;
 import android.location.Address;
-import android.util.Log;
 
 import com.bitsworking.starlocations.utils.SimpleHash;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
@@ -23,7 +19,7 @@ public class LocationTag {
     private LatLng latLng = null; // should always be populated
     public String title = "";
 
-    public String locationHash = null;  // Hash representing the location
+    public String uid = null;  // Hash representing the location
 
     // Very likely null:
     public String searchQuery = null; // might be null
@@ -36,34 +32,25 @@ public class LocationTag {
         this(coordinates, null, null);
     }
 
+    public LocationTag(LatLng coordinates, String searchQuery, Address address) {
+        setLatLng(coordinates);
+        this.searchQuery = searchQuery;
+        this.address = address;
+        this.uid = "_" + Tools.getRandomString(8);
+    }
+
     public LatLng getLatLng() {
         return latLng;
     }
 
     public void setLatLng(LatLng latLng) {
         this.latLng = latLng;
-
-        try {
-            this.locationHash = SimpleHash.sha1(String.format("%s/%s", latLng.latitude, latLng.longitude)).substring(0, 8);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            this.locationHash = Tools.random(10);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            this.locationHash = Tools.random(10);
-        }
-    }
-
-    public LocationTag(LatLng coordinates, String searchQuery, Address address) {
-        setLatLng(coordinates);
-        this.searchQuery = searchQuery;
-        this.address = address;
     }
 
     @Override
     public String toString() {
         return "LocationTag{" +
-                "hash=" + locationHash + ", " +
+                "uid=" + uid + ", " +
                 "title=" + title + ", " +
                 "latLng=" + latLng + ", " +
                 "mSearchParams=" + searchQuery + ", " +

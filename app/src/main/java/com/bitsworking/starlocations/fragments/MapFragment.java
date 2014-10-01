@@ -2,7 +2,6 @@ package com.bitsworking.starlocations.fragments;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -210,7 +209,14 @@ public class MapFragment extends Fragment {
 
             @Override
             public void onMarkerDragEnd(Marker marker) {
-                addTempMarker(new LocationTag(marker.getPosition()));
+                // Check if we dragged a saved marker
+                LocationTag tag = markerLocationTags.get(marker.getId());
+                if (mLocationTagDatabase.contains(tag.uid)) {
+                    ((MainActivity) getActivity()).askToMoveSavedTag(tag);
+                } else {
+                    // Else add/move this temporary marker
+                    addTempMarker(new LocationTag(marker.getPosition()));
+                }
             }
         });
 
@@ -358,6 +364,7 @@ public class MapFragment extends Fragment {
     public void addMarker(final LocationTag tag, boolean showInfoWindow) {
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(tag.getLatLng());
+        markerOptions.draggable(true);
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
 
         tag.mapMarker = mMap.addMarker(markerOptions);
@@ -370,7 +377,7 @@ public class MapFragment extends Fragment {
 
     // Remove a locationtag / its marker
     public void removeLocationTag(LocationTag tag) {
-        if (mLocationTagDatabase.contains(tag.locationHash)) {
+        if (mLocationTagDatabase.contains(tag.uid)) {
             // If its a saved marker, ask whether really to delete
             ((MainActivity) getActivity()).askToDeleteTag(tag);
 

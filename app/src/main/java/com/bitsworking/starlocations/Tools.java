@@ -8,12 +8,12 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Environment;
-import android.util.Log;
 
 import com.bitsworking.starlocations.exceptions.InvalidLocationException;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Random;
 
@@ -126,15 +126,12 @@ public class Tools {
         return false;
     }
 
-    public static String random(int maxLength) {
-        Random generator = new Random();
-        StringBuilder randomStringBuilder = new StringBuilder();
-        int randomLength = generator.nextInt(maxLength);
-        char tempChar;
-        for (int i = 0; i < randomLength; i++){
-            tempChar = (char) (generator.nextInt(96) + 32);
-            randomStringBuilder.append(tempChar);
-        }
-        return randomStringBuilder.toString();
+    private static final String RANDOM_ALLOWED_CHARACTERS ="0123456789abcdefghiABCDEFGHI";
+    public static String getRandomString(final int sizeOfRandomString) {
+        final SecureRandom random = new SecureRandom();
+        final StringBuilder sb = new StringBuilder();
+        for (int i=0; i<sizeOfRandomString; ++i)
+            sb.append(RANDOM_ALLOWED_CHARACTERS.charAt(random.nextInt(RANDOM_ALLOWED_CHARACTERS.length())));
+        return sb.toString();
     }
 }

@@ -3,8 +3,6 @@ package com.bitsworking.starlocations;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -102,6 +100,7 @@ public class MainActivity extends Activity
         mLocationManager = (LocationManager) getSystemService(Activity.LOCATION_SERVICE);
 
         mLocationTagDatabase = new LocationTagDatabase(this);
+        mLocationTagDatabase.logDb();
 
         // Get the intent, verify the action and get the query
         handleIntent(getIntent());
@@ -149,16 +148,15 @@ public class MainActivity extends Activity
             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         if (network_enabled)
             mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
-
-//        mLocationDatabase.save();
-        Toast.makeText(this, "DB: " + mLocationTagDatabase.numItems() + " items", Toast.LENGTH_LONG).show();
     }
 
     @Override
     public void onPause() {
+        super.onPause();  // Always call the superclass method first
+
         Log.v(TAG, "onPause");
         mLocationManager.removeUpdates(locationListener);
-        super.onPause();  // Always call the superclass method first
+        mLocationTagDatabase.logDb();
     }
 
     public void onBackPressed(){
@@ -446,8 +444,26 @@ public class MainActivity extends Activity
         builder.setMessage("Delete saved marker?")
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        if (mLocationTagDatabase.contains(tag.locationHash)) {
-                            mLocationTagDatabase.remove(tag.locationHash);
+                        if (mLocationTagDatabase.contains(tag.uid)) {
+                            mLocationTagDatabase.remove(tag.uid);
+                            mLocationTagDatabase.save();
+                        }
+
+                        mMapFragment.removeMarker(tag.mapMarker);
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    public void askToMoveSavedTag(final LocationTag tag) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Move saved marker?")
+                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        if (mLocationTagDatabase.contains(tag.uid)) {
+                            mLocationTagDatabase.remove(tag.uid);
                             mLocationTagDatabase.save();
                         }
 
