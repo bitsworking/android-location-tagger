@@ -45,9 +45,7 @@ public class LocationTagDatabase {
             appVersionName = "?";
         }
 
-        // 1. open db file
-
-        // 2. wait for instructions (read, write, query)
+        // Check if SD card is writable
         if (!Tools.isExternalStorageWritable()) {
             Log.e(TAG, "External storage not writable. Cannot save db.");
             throw new IllegalStateException();
@@ -57,33 +55,57 @@ public class LocationTagDatabase {
         File dir = new File(Tools.getSdCardDirectory());
         if (!dir.exists()) dir.mkdir();
 
+        // Debug setting to wipe db on boot
         if (DEBUG_REBUILD_DB) {
-            // If we dont want to read db
             Log.w(TAG, "debug: rebuild db");
             setupEmptyDatabase();
             return;
         }
 
-        // Read db string from json file
+        // Read db from json file
         File dbFile = new File(Tools.getSdCardDirectory(), Constants.DB_FILE);
         StringBuilder text = new StringBuilder();
-
         try {
             BufferedReader br = new BufferedReader(new FileReader(dbFile));
             String line;
-
             while ((line = br.readLine()) != null) {
                 text.append(line);
                 text.append('\n');
             }
             br.close();
-        } catch (IOException e) {
-            //You'll need to add proper error handling here
-        }
 
-        loadFromJsonString(text.toString().trim());
+            // Parse database into JSON Object
+            loadFromJsonString(text.toString().trim());
+
+        } catch (IOException e) {
+            // If we couldn't read database on sd card, setup new one
+            setupEmptyDatabase();
+        }
     }
 
+    /**
+     * Load database from JSON string
+     */
+    private void loadFromJsonString(String jsonString) {
+        if (!jsonString.isEmpty()) {
+            try {
+                root = new JSONObject(jsonString);
+                Log.v(TAG, "Loaded db from file");
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Log.e(TAG, "Could not parse JSON string from database file. Creating new DB.");
+                setupEmptyDatabase();
+            }
+        } else {
+            Log.v(TAG, "DB from file empty. Setup empty database");
+            setupEmptyDatabase();
+        }
+        Log.v(TAG, "DB: " + root.toString());
+    }
+
+    /**
+     * Save database to sd card json file
+     */
     public void save() {
         try {
             root.put("version-schema", VERSION_DB_SCHEMA);
@@ -101,25 +123,7 @@ public class LocationTagDatabase {
         }
     }
 
-    private void loadFromJsonString(String jsonString) {
-        if (!jsonString.isEmpty()) {
-            // Load DB from File
-            try {
-                root = new JSONObject(jsonString);
-                Log.v(TAG, "Loaded db from file");
-            } catch (JSONException e) {
-                e.printStackTrace();
-                Log.e(TAG, "Could not parse JSON string from database file. Creating new DB.");
-                setupEmptyDatabase();
-            }
-
-        } else {
-            Log.v(TAG, "DB from file empty. Setup empty database");
-            setupEmptyDatabase();
-        }
-        Log.v(TAG, "DB: " + root.toString());
-    }
-
+    // Create a new, blank database
     private void setupEmptyDatabase() {
         root = new JSONObject();
         try {
@@ -131,6 +135,7 @@ public class LocationTagDatabase {
         }
     }
 
+    // Get number of items in the database
     public int numItems() {
         try {
             return root.getJSONArray("locations").length();
@@ -140,6 +145,7 @@ public class LocationTagDatabase {
         }
     }
 
+    // Add a LocationTag to the database
     public void put(LocationTag tag) {
         try {
             JSONArray locations = root.getJSONArray("locations");
@@ -151,6 +157,7 @@ public class LocationTagDatabase {
         Log.v(TAG, "DB: " + root.toString());
     }
 
+    // Get a LocationTag from the database by array index
     public LocationTag get(int index) {
         try {
             JSONArray locations = root.getJSONArray("locations");
