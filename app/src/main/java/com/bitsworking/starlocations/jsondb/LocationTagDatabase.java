@@ -202,6 +202,13 @@ public class LocationTagDatabase {
         Log.v(TAG, "removed locationTag " + uid);
     }
 
+    // Deletes database file and empties all content from memoty
+    public void deleteDatabase() {
+        locationTags.clear();
+        File dbFile = new File(Tools.getSdCardDirectory(), Constants.DB_FILE);
+        dbFile.delete();
+    }
+
     public void logDb() {
         Log.v(TAG, locationTags.toString());
     }

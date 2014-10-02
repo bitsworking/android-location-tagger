@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="Database"
+        android:key="pref_key_db_settings">
+        <Preference
+            android:title="Show database"
+            android:key="pref_key_db_show"
+            />
+        <Preference
+            android:title="Delete database"
+            android:summary="Careful, no coming back."
+            android:key="pref_key_db_delete"
+            />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="Search"
+        android:key="pref_key_search_settings">
+        <Preference
+            android:title="Clear recent searches"
+            android:summary="from autocomplete"
+            android:key="pref_key_search_clear_autocomplete"
+            />
+    </PreferenceCategory>
+</PreferenceScreen>
