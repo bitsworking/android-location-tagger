@@ -192,6 +192,10 @@ public class MainActivity extends Activity
         // do something here and don't write super.onBackPressed()
         if (fragment_attached == FRAGMENT_MAP && mMapFragment.isOverlayVisible()) {
             mMapFragment.closeOverlay();
+        } else if (fragment_attached == FRAGMENT_SETTINGS) {
+            mNavigationDrawerFragment.selectItem(FRAGMENT_MAP);
+        } else if (fragment_attached == FRAGMENT_DBVIEWER) {
+            mNavigationDrawerFragment.selectItem(FRAGMENT_SETTINGS);
         } else {
             super.onBackPressed();
         }
@@ -627,7 +631,16 @@ public class MainActivity extends Activity
                 Bundle savedInstanceState) {
             TextView rootView = new TextView(getActivity());
             rootView.setLayoutParams(new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            rootView.setText("Test");
+            try {
+                JSONObject root = new JSONObject(((MainActivity) getActivity()).mLocationTagDatabase.getDatabaseFileContents());
+                rootView.setText((root.toString(4)));
+            } catch (IOException e) {
+                e.printStackTrace();
+                rootView.setText(e.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+                rootView.setText(e.toString());
+            }
             return rootView;
         }
     }

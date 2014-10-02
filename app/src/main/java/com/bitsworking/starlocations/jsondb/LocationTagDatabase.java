@@ -66,58 +66,52 @@ public class LocationTagDatabase {
         loadDatabaseFromFile();
     }
 
-    private void loadDatabaseFromFile() {
+    public String getDatabaseFileContents() throws IOException {
         File dbFile = new File(Tools.getSdCardDirectory(), Constants.DB_FILE);
         StringBuilder text = new StringBuilder();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(dbFile));
-            String line;
-            while ((line = br.readLine()) != null) {
-                text.append(line);
-                text.append('\n');
-            }
-            br.close();
 
-            // Parse database into JSON Object
-            loadDatabaseFromJsonString(text.toString().trim());
-
-        } catch (IOException e) {
-            // If we couldn't read database on sd card, setup new one
-            e.printStackTrace();
+        BufferedReader br = new BufferedReader(new FileReader(dbFile));
+        String line;
+        while ((line = br.readLine()) != null) {
+            text.append(line);
+            text.append('\n');
         }
+        br.close();
+
+        // Parse database into JSON Object
+        return text.toString().trim();
     }
 
     /**
      * Load database from JSON string
      */
-    private void loadDatabaseFromJsonString(String jsonString) {
-        if (!jsonString.isEmpty()) {
-            try {
-                JSONObject root = new JSONObject(jsonString);
-                JSONArray locations = root.getJSONArray("locations");
-                final int cnt = locations.length();
-                for (int i=0; i<cnt; i++) {
-                    JSONObject j = locations.getJSONObject(i);
+    private void loadDatabaseFromFile() {
+        try {
+            JSONObject root = new JSONObject(getDatabaseFileContents());
+            JSONArray locations = root.getJSONArray("locations");
+            final int cnt = locations.length();
+            for (int i=0; i<cnt; i++) {
+                JSONObject j = locations.getJSONObject(i);
 
-                    double lat = j.getDouble("latitude");
-                    double lng = j.getDouble("longitude");
-                    LocationTag tag = new LocationTag(new LatLng(lat, lng));
-                    tag.uid = j.getString("uid");
+                double lat = j.getDouble("latitude");
+                double lng = j.getDouble("longitude");
+                LocationTag tag = new LocationTag(new LatLng(lat, lng));
+                tag.uid = j.getString("uid");
 
-                    // Fill optional fields, do nothing
-                    try { tag.title = j.getString("title"); } catch (JSONException e) {}
-                    try { tag.searchQuery = j.getString("searchQuery"); } catch (JSONException e) {}
+                // Fill optional fields, do nothing
+                try { tag.title = j.getString("title"); } catch (JSONException e) {}
+                try { tag.searchQuery = j.getString("searchQuery"); } catch (JSONException e) {}
 
-                    locationTags.put(tag.uid, tag);
-                }
-
-                Log.v(TAG, "Loaded db from file");
-            } catch (JSONException e) {
-                e.printStackTrace();
-                Log.e(TAG, "Could not parse JSON string from database file. Creating new DB.");
+                locationTags.put(tag.uid, tag);
             }
-        } else {
-            Log.v(TAG, "DB from file empty. Setup empty database");
+
+            Log.v(TAG, "Loaded db from file");
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Log.e(TAG, "Could not parse JSON string from database file. Creating new DB." + e.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "Could not parse JSON string from database file. Creating new DB. " + e.toString());
         }
     }
 
