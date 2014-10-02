@@ -17,8 +17,7 @@
         android:title="Search"
         android:key="pref_key_search_settings">
         <Preference
-            android:title="Clear recent searches"
-            android:summary="from autocomplete"
+            android:title="Clear search history"
             android:key="pref_key_search_clear_autocomplete"
             />
     </PreferenceCategory>

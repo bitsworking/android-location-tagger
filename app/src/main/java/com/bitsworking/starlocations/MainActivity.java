@@ -139,7 +139,7 @@ public class MainActivity extends Activity
             mSearchView.setQuery("", false);
             mSearchView.setIconified(true);
 
-            handleSearch(query);
+            handleSearch(query, true);
 
         } else if (Intent.ACTION_SEND.equals(intent.getAction())) {
             Log.v(TAG, "Send intent: " + intent);
@@ -423,7 +423,7 @@ public class MainActivity extends Activity
      *
      * @param query
      */
-    private void handleSearch(final String query) {
+    private void handleSearch(final String query, final boolean addToHistory) {
         Log.v(TAG, "handleSearch: " + query);
 
         // Geocoding and shit in background thread
@@ -460,9 +460,11 @@ public class MainActivity extends Activity
                 }
 
                 // Successfully found coords. Save to recent suggestions.
-                SearchRecentSuggestions suggestions = new SearchRecentSuggestions(getBaseContext(),
-                        MySearchRecentSuggestionsProvider.AUTHORITY, MySearchRecentSuggestionsProvider.MODE);
-                suggestions.saveRecentQuery(query, null);
+                if (addToHistory) {
+                    SearchRecentSuggestions suggestions = new SearchRecentSuggestions(getBaseContext(),
+                            MySearchRecentSuggestionsProvider.AUTHORITY, MySearchRecentSuggestionsProvider.MODE);
+                    suggestions.saveRecentQuery(query, null);
+                }
 
                 // Show on map
                 final LocationTag tag = new LocationTag(coords, query, address);
@@ -532,6 +534,21 @@ public class MainActivity extends Activity
         dialog.show();
     }
 
+    public void askToDeleteDatabase() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Delete the database?")
+                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        mLocationTagDatabase.deleteDatabase();
+                        mMapFragment = new MapFragment();
+                        Toast.makeText(getBaseContext(), "Database deleted", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
     private void parseLocationsFromText(String text) {
 //        ProgressDialog progressDialog = ProgressDialog.show(this, null, "Searching location 2...");
 //        progressDialog.setCancelable(true);
@@ -564,7 +581,7 @@ public class MainActivity extends Activity
         while (matcher.find()) {
             String query = matcher.group(1);
             Log.v(TAG, "Found google maps query: " + query);
-//            handleSearch(query);
+//            handleSearch(query, false);
         }
 
         // 3. goo.gl links
@@ -581,11 +598,6 @@ public class MainActivity extends Activity
         // TODO (geo:lat,lng?q=lat,lng
     }
 
-    public void deleteDatabase() {
-        mLocationTagDatabase.deleteDatabase();
-        mMapFragment = new MapFragment();
-    }
-
     public static class SettingsFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -598,7 +610,6 @@ public class MainActivity extends Activity
             ((Preference) findPreference("pref_key_db_show")).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    Toast.makeText(getActivity(), "show db", Toast.LENGTH_LONG).show();
                     ((MainActivity) getActivity()).mNavigationDrawerFragment.selectItem(FRAGMENT_DBVIEWER);
                     return false;
                 }
@@ -608,17 +619,19 @@ public class MainActivity extends Activity
             ((Preference) findPreference("pref_key_db_delete")).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    ((MainActivity) getActivity()).deleteDatabase();
-                    Toast.makeText(getActivity(), "Database deleted", Toast.LENGTH_LONG).show();
+                    ((MainActivity) getActivity()).askToDeleteDatabase();
                     return false;
                 }
             });
 
             // Search: Clear autocomplete
-            ((Preference) findPreference("pref_key_search_settings")).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            ((Preference) findPreference("pref_key_search_clear_autocomplete")).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-//                    Toast.makeText(getActivity(), "clear autocomplete", Toast.LENGTH_LONG).show();
+                    SearchRecentSuggestions suggestions = new SearchRecentSuggestions(getActivity(),
+                            MySearchRecentSuggestionsProvider.AUTHORITY, MySearchRecentSuggestionsProvider.MODE);
+                    suggestions.clearHistory();
+                    Toast.makeText(getActivity(), "Search history cleared", Toast.LENGTH_LONG).show();
                     return false;
                 }
             });

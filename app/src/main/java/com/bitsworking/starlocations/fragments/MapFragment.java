@@ -116,11 +116,11 @@ public class MapFragment extends Fragment {
                 addMarker(overlayLocationTag, true);
                 delTempMarker();
 
-                closeOverlay();
-
                 // Save to database
                 mLocationTagDatabase.put(overlayLocationTag);
                 mLocationTagDatabase.save();
+
+                closeOverlay();
             }
         });
 
