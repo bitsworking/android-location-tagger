@@ -132,6 +132,7 @@ public class LocationTagDatabase {
      */
     public void save() {
         try {
+            long currentTimestamp = System.currentTimeMillis();
             File dbFile = new File(Tools.getSdCardDirectory(), Constants.DB_FILE);
             JsonWriter writer = new JsonWriter(new OutputStreamWriter(new FileOutputStream(dbFile), "UTF-8"));
 
@@ -149,9 +150,11 @@ public class LocationTagDatabase {
                 writer.beginObject();
 
                 // Original saved timestamp if exists, else current timestamp
-                long savedTimestamp = (tag.savedTimestamp != null) ? tag.savedTimestamp : System.currentTimeMillis();
+                long savedTimestamp = (tag.savedTimestamp != null) ? tag.savedTimestamp : currentTimestamp;
+                tag.savedTimestamp = savedTimestamp;
+                tag.editedTimestamp = currentTimestamp;
                 writer.name(JSON_KEY_TIMESTAMP_CREATED).value(savedTimestamp);
-                writer.name(JSON_KEY_TIMESTAMP_EDITED).value(System.currentTimeMillis());
+                writer.name(JSON_KEY_TIMESTAMP_EDITED).value(currentTimestamp);
 
                 // Object values
                 writer.name(JSON_KEY_UID).value(tag.uid);

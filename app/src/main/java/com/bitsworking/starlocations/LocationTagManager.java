@@ -37,4 +37,8 @@ public class LocationTagManager {
     public void removeTempLocationTag(LocationTag tag) {
         mTempLocationTags.remove(tag);
     }
+
+    public void removeAllTempLocationTags() {
+        mTempLocationTags.clear();
+    }
 }

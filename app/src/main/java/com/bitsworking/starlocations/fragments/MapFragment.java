@@ -49,6 +49,7 @@ public class MapFragment extends Fragment {
     private LocationTag overlayLocationTag = null;
 
     private Intent shareIntent = null;
+    public boolean isMapsSetup = false;
 
     // <marker.id, tag>
     private HashMap<String, LocationTag> markerLocationTags = new HashMap<String, LocationTag>();
@@ -266,11 +267,9 @@ public class MapFragment extends Fragment {
         // Initial positining
         Location lastKnownLocation = ((MainActivity) getActivity()).getLocation();
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()), 8.0f));
-    }
 
-//    public Marker addTempMarker(LocationTag tag) {
-//        return addTempMarker(tag, mMap.getCameraPosition().zoom);
-//    }
+        isMapsSetup = true;
+    }
 
     public void geocodeNewMarker(final LocationTag tag) {
         Thread thread = new Thread() {
@@ -355,10 +354,11 @@ public class MapFragment extends Fragment {
 
         tag.mapMarker = mMap.addMarker(markerOptions);
         markerLocationTags.put(tag.mapMarker.getId(), tag);
-        ((MainActivity) getActivity()).addTempLocationTag(tag);
+        ((MainActivity) getActivity()).addTempLocationTag(tag, false);
 
         if (showInfoWindow) {
             tag.mapMarker.showInfoWindow();
+            closeOverlay();
         }
 
         if (animateCameraWithZoom != null) {
@@ -386,7 +386,7 @@ public class MapFragment extends Fragment {
 
         } else {
             // If unsaved, then just remove
-            ((MainActivity) getActivity()).removeTempLocationTag(tag);
+            ((MainActivity) getActivity()).removeTempLocationTag(tag, false);
             removeMarker(tag.mapMarker);
         }
     }

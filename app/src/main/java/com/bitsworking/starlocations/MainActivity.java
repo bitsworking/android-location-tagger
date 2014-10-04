@@ -472,14 +472,8 @@ public class MainActivity extends Activity
                     suggestions.saveRecentQuery(query, null);
                 }
 
-                // Show on map
                 final LocationTag tag = new LocationTag(coords, query, address);
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mMapFragment.addMarker(tag, true, 12, true);
-                    }
-                });
+                addTempLocationTag(tag, true);
             }
         };
         thread.start();
@@ -499,8 +493,7 @@ public class MainActivity extends Activity
                             db.save();
                         }
 
-                        removeTempLocationTag(tag);
-                        mMapFragment.removeMarker(tag.mapMarker);
+                        removeTempLocationTag(tag, true);
                     }
                 })
                 .setNegativeButton(R.string.cancel, null);
@@ -543,6 +536,7 @@ public class MainActivity extends Activity
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         mLocationTagManager.getDatabase().deleteDatabase();
+                        mLocationTagManager.removeAllTempLocationTags();
                         mMapFragment = new MapFragment();
                         Toast.makeText(getBaseContext(), "Database deleted", Toast.LENGTH_LONG).show();
                     }
@@ -575,12 +569,30 @@ public class MainActivity extends Activity
         return collection;
     }
 
-    public void addTempLocationTag(LocationTag tag) {
+    public void addTempLocationTag(final LocationTag tag, boolean showOnMapIfSetup) {
         mLocationTagManager.addTempLocationTag(tag);
+
+        if (showOnMapIfSetup && mMapFragment.isMapsSetup) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mMapFragment.addMarker(tag, true, 12, true);
+                }
+            });
+        }
     }
 
-    public void removeTempLocationTag(LocationTag tag) {
+    public void removeTempLocationTag(final LocationTag tag, boolean removeFromMapIfSetup) {
         mLocationTagManager.removeTempLocationTag(tag);
+
+        if (removeFromMapIfSetup && mMapFragment.isMapsSetup && tag.mapMarker != null) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mMapFragment.removeMarker(tag.mapMarker);
+                }
+            });
+        }
     }
 
     private void parseLocationsFromText(String text) {
@@ -600,13 +612,7 @@ public class MainActivity extends Activity
                     Double.valueOf(parts[1].trim())
             );
 
-//            mHandler.postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    mMapFragment.addTempMarker(new LocationTag(coords));
-//
-//                }
-//            }, 1000);
+            addTempLocationTag(new LocationTag(coords), true);
         }
 
         // 2. google maps links
@@ -615,7 +621,7 @@ public class MainActivity extends Activity
         while (matcher.find()) {
             String query = matcher.group(1);
             Log.v(TAG, "Found google maps query: " + query);
-//            handleSearch(query, false);
+            handleSearch(query, false);
         }
 
         // 3. goo.gl links
@@ -624,7 +630,7 @@ public class MainActivity extends Activity
         while (matcher.find()) {
             String url = "https://goo.gl/maps/" + matcher.group(1);
             Log.v(TAG, "Found goo.gl shortcut X: " + url);
-//            mMapFragment.addTempMarker(new LocationTag(new LatLng(48.31013627, 15.790834687)));
+//            addTempLocationTag(new LocationTag(new LatLng(48.31013627, 15.790834687)), true);
         }
     }
 
