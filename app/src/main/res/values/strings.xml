@@ -5,6 +5,8 @@
     <string name="title_section0">Map</string>
     <string name="title_section1">List</string>
     <string name="title_section2">Settings</string>
+    <string name="fragment_dbviewer">Database Viewer</string>
+
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="action_location_current">Now</string>

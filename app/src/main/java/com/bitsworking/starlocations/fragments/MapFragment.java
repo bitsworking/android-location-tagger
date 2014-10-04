@@ -22,7 +22,6 @@ import com.bitsworking.starlocations.MainActivity;
 import com.bitsworking.starlocations.R;
 import com.bitsworking.starlocations.Tools;
 import com.bitsworking.starlocations.exceptions.InvalidLocationException;
-import com.bitsworking.starlocations.jsondb.LocationTagDatabase;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -46,13 +45,12 @@ public class MapFragment extends Fragment {
     private RelativeLayout rlOverlay;
 
     private Handler mHandler = new Handler();
-    private LocationTagDatabase mLocationTagDatabase;
 
     private LocationTag overlayLocationTag = null;
-    private Marker lastTempMarker;
 
     private Intent shareIntent = null;
 
+    // <marker.id, tag>
     private HashMap<String, LocationTag> markerLocationTags = new HashMap<String, LocationTag>();
 
     @Override
@@ -69,7 +67,8 @@ public class MapFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_map, container, false);
 
         // Acquire reference to location tag database
-        mLocationTagDatabase = ((MainActivity) getActivity()).getLocationTagDatabase();
+//        TODO: get all tags, not only saved ones
+//        mLocationTagDatabase = ((MainActivity) getActivity()).getLocationTagDatabase();
 
         mMapView = (MapView) rootView.findViewById(R.id.mapView);
         Log.v(TAG, "Setting up mMapView");
@@ -113,13 +112,14 @@ public class MapFragment extends Fragment {
             public void onClick(View v) {
                 // Update title info and replace marker
                 overlayLocationTag.title = ((EditText) rlOverlay.findViewById(R.id.etTitle)).getText().toString();
-                addMarker(overlayLocationTag, true);
-                delTempMarker();
 
                 // Save to database
-                mLocationTagDatabase.put(overlayLocationTag);
-                mLocationTagDatabase.save();
+                ((MainActivity) getActivity()).saveLocationTag(overlayLocationTag);
 
+                removeMarker(overlayLocationTag.mapMarker);
+                addMarker(overlayLocationTag, true, null, true);
+
+                // Needs to be called last, because it removes the overlayLocationTag
                 closeOverlay();
             }
         });
@@ -180,9 +180,9 @@ public class MapFragment extends Fragment {
                     return false;
                 }
 
-                addTempMarker(new LocationTag(new LatLng(
+                addMarker(new LocationTag(new LatLng(
                         lastKnownLocation.getLatitude(),
-                        lastKnownLocation.getLongitude())), 12);
+                        lastKnownLocation.getLongitude())), true, 12, true);
 
                 return false;
             }
@@ -191,7 +191,7 @@ public class MapFragment extends Fragment {
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
-                addTempMarker(new LocationTag(latLng));
+                addMarker(new LocationTag(latLng), true, 10, true);
             }
         });
 
@@ -214,13 +214,14 @@ public class MapFragment extends Fragment {
 
             @Override
             public void onMarkerDragEnd(Marker marker) {
-                // Check if we dragged a saved marker
                 LocationTag tag = markerLocationTags.get(marker.getId());
-                if (mLocationTagDatabase.contains(tag.uid)) {
+
+                // Check if we dragged a saved marker
+                if (((MainActivity) getActivity()).isSavedLocationTag(tag)) {
                     ((MainActivity) getActivity()).askToMoveSavedTag(tag, marker.getPosition());
                 } else {
                     // Else add/move this temporary marker
-                    addTempMarker(new LocationTag(marker.getPosition()));
+                    addMarker(new LocationTag(marker.getPosition()), true, 10, true);
                 }
             }
         });
@@ -257,7 +258,7 @@ public class MapFragment extends Fragment {
         mMap.setInfoWindowAdapter(customInfoWindowAdapter);
 
         // Add saved markers
-        for (LocationTag tag : mLocationTagDatabase.getAll()) {
+        for (LocationTag tag : ((MainActivity) getActivity()).getAllLocationTags()) {
             Log.v(TAG, "Got saved tag: " + tag.toString());
             addMarker(tag);
         }
@@ -267,46 +268,9 @@ public class MapFragment extends Fragment {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()), 8.0f));
     }
 
-    public void delTempMarker() {
-        if (lastTempMarker != null) {
-            markerLocationTags.remove(lastTempMarker.getId());
-            lastTempMarker.remove();
-        }
-    }
-
-    public void addTempMarker(LocationTag tag) {
-        addTempMarker(tag, mMap.getCameraPosition().zoom);
-    }
-
-    public void addTempMarker(final LocationTag tag, float zoom) {
-        delTempMarker();
-        closeOverlay();
-
-        // Build new marker
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(tag.getLatLng());
-        markerOptions.draggable(true);
-
-        // Add marker, show info window
-        lastTempMarker = mMap.addMarker(markerOptions);
-        tag.mapMarker = lastTempMarker;
-        markerLocationTags.put(lastTempMarker.getId(), tag);
-
-        // Animate to marker
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(tag.getLatLng(), zoom));
-        lastTempMarker.showInfoWindow();
-
-        if (tag.address == null) {
-            // Geocode: get address from coordinates
-            geocodeNewMarker(tag);
-        }
-
-        // Update Share Intent if none set yet
-        if (shareIntent == null) {
-            shareIntent = tag.getShareIntent();
-            ((MainActivity) getActivity()).setShareActionIntent(shareIntent);
-        }
-    }
+//    public Marker addTempMarker(LocationTag tag) {
+//        return addTempMarker(tag, mMap.getCameraPosition().zoom);
+//    }
 
     public void geocodeNewMarker(final LocationTag tag) {
         Thread thread = new Thread() {
@@ -375,42 +339,62 @@ public class MapFragment extends Fragment {
     }
 
     public void addMarker(LocationTag tag) {
-        addMarker(tag, false);
+        addMarker(tag, false, null, false);
     }
 
-    public void addMarker(LocationTag tag, boolean showInfoWindow) {
+    public void addMarker(LocationTag tag, boolean showInfoWindow,
+                          Integer animateCameraWithZoom, boolean setShareIntent) {
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(tag.getLatLng());
         markerOptions.draggable(true);
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+
+        // Set color
+        if (tag.savedTimestamp != null) {
+            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+        }
 
         tag.mapMarker = mMap.addMarker(markerOptions);
         markerLocationTags.put(tag.mapMarker.getId(), tag);
+        ((MainActivity) getActivity()).addTempLocationTag(tag);
 
         if (showInfoWindow) {
             tag.mapMarker.showInfoWindow();
+        }
+
+        if (animateCameraWithZoom != null) {
+            // Animate to marker
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(tag.getLatLng(), animateCameraWithZoom));
         }
 
         if (tag.address == null) {
             // Geocode: get address from coordinates
             geocodeNewMarker(tag);
         }
+
+        if (setShareIntent) {
+            shareIntent = tag.getShareIntent();
+            ((MainActivity) getActivity()).setShareActionIntent(shareIntent);
+        }
+
     }
 
     // Remove a locationtag / its marker
     public void removeLocationTag(LocationTag tag) {
-        if (mLocationTagDatabase.contains(tag.uid)) {
+        if (((MainActivity) getActivity()).isSavedLocationTag(tag)) {
             // If its a saved marker, ask whether really to delete
             ((MainActivity) getActivity()).askToDeleteTag(tag);
 
         } else {
             // If unsaved, then just remove
+            ((MainActivity) getActivity()).removeTempLocationTag(tag);
             removeMarker(tag.mapMarker);
         }
     }
 
     public void removeMarker(Marker marker) {
-        markerLocationTags.remove(marker.getId());
-        marker.remove();
+        if (marker != null) {
+            markerLocationTags.remove(marker.getId());
+            marker.remove();
+        }
     }
 }

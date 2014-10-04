@@ -51,6 +51,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,26 +72,31 @@ public class MainActivity extends Activity
     private ListFragment mListFragment = new ListFragment();
     private InfoFragment mInfoFragment = new InfoFragment();
 
+    private Handler mHandler = new Handler();
+
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
 
-    private Location mLastKnownLocation = null;
+    private boolean gps_enabled = false;
+    private boolean network_enabled = false;
+
     private LocationManager mLocationManager;
     private ShareActionProvider mShareActionProvider;
-    private Handler mHandler = new Handler();
+    private Location mLastKnownLocation = null;
 
     private SearchView mSearchView;
 
     private int fragment_attached = -1;
     private Fragment mLastFragment;
 
-    private LocationTagDatabase mLocationTagDatabase;
-    private boolean gps_enabled = false;
-    private boolean network_enabled = false;
+    // Store for all saved location tags
+//    private LocationTagDatabase mLocationTagDatabase;
+    private LocationTagManager mLocationTagManager;
 
-    private boolean isFirstResume = true;
+    // Store for all temporary location tags
+    private ArrayList<LocationTag> mTempLocationTags = new ArrayList<LocationTag>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,17 +116,17 @@ public class MainActivity extends Activity
         // Acquire a reference to the system Location Manager
         mLocationManager = (LocationManager) getSystemService(Activity.LOCATION_SERVICE);
 
-        mLocationTagDatabase = new LocationTagDatabase(this);
-        mLocationTagDatabase.logDb();
+        // Instantiate the Tag Manager
+        mLocationTagManager = new LocationTagManager(this);
 
         // Get the intent, verify the action and get the query
         handleIntent(getIntent());
 
-        parseLocationsFromText("Rasumofskygasse 28\n" +
-                "1030 Wien\n" +
-                "48.31013627,15.790834687\n" +
-                "https://www.google.com/maps/preview?q=Rasumofskygasse+28,+1030+Wien&ftid=0x476d076dec808089:0xaea718f50b73857c&hl=en&gl=us\n" +
-                "http://goo.gl/maps/kv4wL");
+//        parseLocationsFromText("Rasumofskygasse 28\n" +
+//                "1030 Wien\n" +
+//                "48.31013627,15.790834687\n" +
+//                "https://www.google.com/maps/preview?q=Rasumofskygasse+28,+1030+Wien&ftid=0x476d076dec808089:0xaea718f50b73857c&hl=en&gl=us\n" +
+//                "http://goo.gl/maps/kv4wL");
     }
 
     @Override
@@ -185,7 +191,7 @@ public class MainActivity extends Activity
 
         Log.v(TAG, "onPause");
         mLocationManager.removeUpdates(locationListener);
-        mLocationTagDatabase.logDb();
+        mLocationTagManager.getDatabase().logDb();
     }
 
     public void onBackPressed(){
@@ -228,7 +234,7 @@ public class MainActivity extends Activity
                 break;
             case FRAGMENT_DBVIEWER:
                 fragment = new DBViewerFragment();
-                mTitle = "DBViewer";
+                mTitle = getString(R.string.fragment_dbviewer);
                 break;
         }
 
@@ -471,7 +477,7 @@ public class MainActivity extends Activity
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mMapFragment.addTempMarker(tag);
+                        mMapFragment.addMarker(tag, true, 12, true);
                     }
                 });
             }
@@ -482,20 +488,18 @@ public class MainActivity extends Activity
         mNavigationDrawerFragment.selectItem(FRAGMENT_MAP);
     }
 
-    public LocationTagDatabase getLocationTagDatabase() {
-        return mLocationTagDatabase;
-    }
-
     public void askToDeleteTag(final LocationTag tag) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Delete saved marker?")
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        if (mLocationTagDatabase.contains(tag.uid)) {
-                            mLocationTagDatabase.remove(tag.uid);
-                            mLocationTagDatabase.save();
+                        LocationTagDatabase db = mLocationTagManager.getDatabase();
+                        if (db.contains(tag.uid)) {
+                            db.remove(tag.uid);
+                            db.save();
                         }
 
+                        removeTempLocationTag(tag);
                         mMapFragment.removeMarker(tag.mapMarker);
                     }
                 })
@@ -511,8 +515,7 @@ public class MainActivity extends Activity
                     public void onClick(DialogInterface dialog, int id) {
                         tag.setLatLng(newPosition);
 
-                        mLocationTagDatabase.put(tag);
-                        mLocationTagDatabase.save();
+                        saveLocationTag(tag);
 
                         mMapFragment.removeMarker(tag.mapMarker);
                         mMapFragment.addMarker(tag);
@@ -539,7 +542,7 @@ public class MainActivity extends Activity
         builder.setMessage("Delete the database?")
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        mLocationTagDatabase.deleteDatabase();
+                        mLocationTagManager.getDatabase().deleteDatabase();
                         mMapFragment = new MapFragment();
                         Toast.makeText(getBaseContext(), "Database deleted", Toast.LENGTH_LONG).show();
                     }
@@ -547,6 +550,37 @@ public class MainActivity extends Activity
                 .setNegativeButton(R.string.cancel, null);
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+//    public LocationTagDatabase getLocationTagDatabase() {
+//        return mLocationTagManager.getDatabase();
+//    }
+
+    public void saveLocationTag(LocationTag tag) {
+        mLocationTagManager.getDatabase().put(tag);
+        mLocationTagManager.getDatabase().save();
+    }
+
+    public boolean isSavedLocationTag(LocationTag tag) {
+        return mLocationTagManager.getDatabase().contains(tag.uid);
+    }
+
+    // Returns all saved and unsaved location tags
+    public Collection<LocationTag> getAllLocationTags() {
+        // get saved tags
+        Collection<LocationTag> collection = mLocationTagManager.getDatabase().getAll();
+
+        // get unsaved tags
+        collection.addAll(mLocationTagManager.getTempLocationTags());
+        return collection;
+    }
+
+    public void addTempLocationTag(LocationTag tag) {
+        mLocationTagManager.addTempLocationTag(tag);
+    }
+
+    public void removeTempLocationTag(LocationTag tag) {
+        mLocationTagManager.removeTempLocationTag(tag);
     }
 
     private void parseLocationsFromText(String text) {
@@ -645,7 +679,7 @@ public class MainActivity extends Activity
             TextView rootView = new TextView(getActivity());
             rootView.setLayoutParams(new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             try {
-                JSONObject root = new JSONObject(((MainActivity) getActivity()).mLocationTagDatabase.getDatabaseFileContents());
+                JSONObject root = new JSONObject(((MainActivity) getActivity()).mLocationTagManager.getDatabase().getDatabaseFileContents());
                 rootView.setText((root.toString(4)));
             } catch (IOException e) {
                 e.printStackTrace();

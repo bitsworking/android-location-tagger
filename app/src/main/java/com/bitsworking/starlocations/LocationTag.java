@@ -17,12 +17,19 @@ import java.security.NoSuchAlgorithmException;
 public class LocationTag {
     private final static String TAG = "LocationTag";
 
-    private LatLng latLng = null; // should always be populated
+    public String uid = null;     // unique random id of this tag
+    private LatLng latLng = null; // is always there
     public String title = "";
 
-    public String uid = null;  // Hash representing the location
+    // If this tag has been saved, the timestamp of the initial save is stored
+    // (current time in milliseconds since January 1, 1970 00:00:00.0 UTC.)
+    public Long savedTimestamp = null;
 
-    // Very likely null:
+    // If this tag has been created/edited, the timestamp of the create/last edit is stored
+    // (current time in milliseconds since January 1, 1970 00:00:00.0 UTC.)
+    public Long editedTimestamp = null;
+
+    // Very likely null
     public String searchQuery = null; // might be null
     public Address address = null;    // might be null
 
@@ -40,6 +47,10 @@ public class LocationTag {
         this.uid = "_" + Tools.getRandomString(8);
     }
 
+    public boolean isSaved() {
+        return savedTimestamp != null;
+    }
+
     public LatLng getLatLng() {
         return latLng;
     }
@@ -52,6 +63,8 @@ public class LocationTag {
     public String toString() {
         return "LocationTag{" +
                 "uid=" + uid + ", " +
+                "saved=" + savedTimestamp + ", " +
+                "edited=" + editedTimestamp + ", " +
                 "title=" + title + ", " +
                 "latLng=" + latLng + ", " +
                 "mSearchParams=" + searchQuery + ", " +

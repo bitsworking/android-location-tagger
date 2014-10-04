@@ -36,6 +36,13 @@ public class LocationTagDatabase {
 
     static final int VERSION_DB_SCHEMA = 1;
     private final boolean DEBUG_REBUILD_DB = false;
+    private final String JSON_KEY_TIMESTAMP_CREATED = "savedTimestamp";
+    private final String JSON_KEY_TIMESTAMP_EDITED = "editedTimestamp";
+    private final String JSON_KEY_LATITUDE = "latitude";
+    private final String JSON_KEY_LONGITUDE = "longitude";
+    private final String JSON_KEY_TITLE = "title";
+    private final String JSON_KEY_UID = "uid";
+    private final String JSON_KEY_SEARCHQUERY = "searchQuery";
 
     private String appVersionName;
 
@@ -93,14 +100,19 @@ public class LocationTagDatabase {
             for (int i=0; i<cnt; i++) {
                 JSONObject j = locations.getJSONObject(i);
 
-                double lat = j.getDouble("latitude");
-                double lng = j.getDouble("longitude");
+                double lat = j.getDouble(JSON_KEY_LATITUDE);
+                double lng = j.getDouble(JSON_KEY_LONGITUDE);
                 LocationTag tag = new LocationTag(new LatLng(lat, lng));
-                tag.uid = j.getString("uid");
+                tag.uid = j.getString(JSON_KEY_UID);
+
+                try { tag.savedTimestamp = j.getLong(JSON_KEY_TIMESTAMP_CREATED); } catch (JSONException e) {}
+                try { tag.editedTimestamp = j.getLong(JSON_KEY_TIMESTAMP_EDITED); } catch (JSONException e) {}
+
+                try { tag.title = j.getString(JSON_KEY_TITLE); } catch (JSONException e) {}
 
                 // Fill optional fields, do nothing
-                try { tag.title = j.getString("title"); } catch (JSONException e) {}
-                try { tag.searchQuery = j.getString("searchQuery"); } catch (JSONException e) {}
+                try { tag.title = j.getString(JSON_KEY_TITLE); } catch (JSONException e) {}
+                try { tag.searchQuery = j.getString(JSON_KEY_SEARCHQUERY); } catch (JSONException e) {}
 
                 locationTags.put(tag.uid, tag);
             }
@@ -124,6 +136,8 @@ public class LocationTagDatabase {
             JsonWriter writer = new JsonWriter(new OutputStreamWriter(new FileOutputStream(dbFile), "UTF-8"));
 
             writer.beginObject(); // start root object
+
+            writer.name("developer").value("Chris Hager <chris@bitsworking.com>");
             writer.name("version-schema").value(VERSION_DB_SCHEMA);
             writer.name("version-app").value(appVersionName);
 
@@ -133,10 +147,18 @@ public class LocationTagDatabase {
 
             for (LocationTag tag : locationTags.values()) {
                 writer.beginObject();
-                writer.name("uid").value(tag.uid);
-                writer.name("latitude").value(tag.getLatLng().latitude);
-                writer.name("longitude").value(tag.getLatLng().longitude);
-                writer.name("title").value(tag.title);
+
+                // Original saved timestamp if exists, else current timestamp
+                long savedTimestamp = (tag.savedTimestamp != null) ? tag.savedTimestamp : System.currentTimeMillis();
+                writer.name(JSON_KEY_TIMESTAMP_CREATED).value(savedTimestamp);
+                writer.name(JSON_KEY_TIMESTAMP_EDITED).value(System.currentTimeMillis());
+
+                // Object values
+                writer.name(JSON_KEY_UID).value(tag.uid);
+                writer.name(JSON_KEY_LATITUDE).value(tag.getLatLng().latitude);
+                writer.name(JSON_KEY_LONGITUDE).value(tag.getLatLng().longitude);
+                writer.name(JSON_KEY_TITLE).value(tag.title);
+
                 writer.endObject();
             }
 
