@@ -3,6 +3,7 @@ package com.bitsworking.starlocations;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -21,11 +22,13 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.provider.SearchRecentSuggestions;
 import android.support.v4.widget.DrawerLayout;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.SearchView;
 import android.widget.ShareActionProvider;
 import android.widget.TextView;
@@ -45,6 +48,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -52,8 +56,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,6 +68,7 @@ import java.util.regex.Pattern;
 public class MainActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, Constants {
     private final String TAG = "MainActivity";
+    private final int REQUEST_CODE_FILE_CHOSEN = 1;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -574,12 +582,14 @@ public class MainActivity extends Activity
         return mLocationTagManager.getDatabase().contains(tag.uid);
     }
 
-    public void backupDatabase() {
-        // TODO
-    }
+    public String backupDatabase() {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+        Date now = Calendar.getInstance().getTime();
+        String filename = DB_FILE_BACKUP_PREFIX + df.format(now);
+        mLocationTagManager.getDatabase().save(filename);
 
-    public void restoreDatabase() {
-        // TODO
+        String filename_full = Constants.SD_DIRECTORY + "/" + filename + DB_FILE_EXT;
+        return filename_full;
     }
 
     // Returns all saved and unsaved location tags
@@ -704,5 +714,71 @@ public class MainActivity extends Activity
             }
             return rootView;
         }
+    }
+
+    // restore or import
+    public void restoreDatabase(final boolean isImport) {
+        // Find all backup files
+        File folder = new File(Tools.getSdCardDirectory());
+        File[] listOfFiles = folder.listFiles();
+
+        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                this, android.R.layout.select_dialog_singlechoice);
+
+        for (int i = 0; i < listOfFiles.length; i++) {
+            if (listOfFiles[i].isFile()) {
+                File f = listOfFiles[i];
+                if (f.getName().startsWith(DB_FILE_BACKUP_PREFIX) && f.getName().endsWith(DB_FILE_EXT)) {
+                    arrayAdapter.add(f.getName());
+                }
+            }
+        }
+
+        if (arrayAdapter.getCount() == 0) {
+            Toast.makeText(getApplicationContext(), "No backups found.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Show backup file picker dialog
+        String title = isImport ? "import" : "restore";
+        new AlertDialog.Builder(this)
+                .setTitle("Choose a backup to " + title)
+                .setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        final String filename = arrayAdapter.getItem(which);
+                        askToRestoreDatabase(filename, isImport);
+                    }
+                })
+                .create().show();
+    }
+
+    private void askToRestoreDatabase(final String filename, final boolean isImport) {
+        String title;
+        if (isImport) {
+            title = "Importing " + filename + " may overwrite existing tags. Are you sure you want to proceed?";
+        } else {
+            title = "Restoring " + filename + " will overwrite your database. Are you sure you want to do this?";
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setMessage(title)
+                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (!isImport) {
+                            mLocationTagManager.getDatabase().clear();
+                        }
+
+                        String fn = LocationTagDatabase.getFullDbFilename(filename.replace(DB_FILE_EXT, ""));
+                        int n = mLocationTagManager.getDatabase().importDatabaseFromFile(fn);
+                        mLocationTagManager.getDatabase().save();
+                        mMapFragment = new MapFragment();
+
+                        Toast.makeText(getApplicationContext(), isImport ? "Imported " + n + " markers" : "Restored " + n + " markers", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null);
+        Dialog dialog = builder.create();
+        dialog.show();
     }
 }

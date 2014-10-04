@@ -21,7 +21,13 @@
             />
         <Preference
             android:title="Restore database"
+            android:summary="Overwrites the database"
             android:key="pref_key_db_restore"
+            />
+        <Preference
+            android:title="Import database"
+            android:summary="Adds items to the database"
+            android:key="pref_key_db_import"
             />
         <Preference
             android:title="Delete database"

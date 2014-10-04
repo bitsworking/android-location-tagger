@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.provider.SearchRecentSuggestions;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.bitsworking.starlocations.Constants;
@@ -12,6 +13,8 @@ import com.bitsworking.starlocations.R;
 import com.bitsworking.starlocations.contentproviders.MySearchRecentSuggestionsProvider;
 
 public class SettingsFragment extends PreferenceFragment {
+    final String TAG = "SettingsFragment";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,16 +35,26 @@ public class SettingsFragment extends PreferenceFragment {
         ((Preference) findPreference("pref_key_db_backup")).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                ((MainActivity) getActivity()).backupDatabase();
+                String fn = ((MainActivity) getActivity()).backupDatabase();
+                Toast.makeText(getActivity(), "Database backed up to SDCard/" + fn, Toast.LENGTH_LONG).show();
                 return false;
             }
         });
 
         // DB: Restore
-        ((Preference) findPreference("pref_key_db_backup")).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+        ((Preference) findPreference("pref_key_db_restore")).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                ((MainActivity) getActivity()).restoreDatabase();
+                ((MainActivity) getActivity()).restoreDatabase(false);
+                return false;
+            }
+        });
+
+        // DB: Import
+        ((Preference) findPreference("pref_key_db_import")).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                ((MainActivity) getActivity()).restoreDatabase(true);
                 return false;
             }
         });

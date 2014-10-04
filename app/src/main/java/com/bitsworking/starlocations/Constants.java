@@ -12,5 +12,7 @@ public interface Constants {
     static final String PLACES_API_KEY = "AIzaSyDxQUIFKrAxLLb-P_svIFIWd-IjWmvyYNs";
 
     static final String SD_DIRECTORY = "/Locations";
-    static final String DB_FILE = "locations.json";
+    static final String DB_FILE_EXT = ".json";
+    static final String DB_FILE = "locations";
+    static final String DB_FILE_BACKUP_PREFIX = "locations-backup_";
 }
