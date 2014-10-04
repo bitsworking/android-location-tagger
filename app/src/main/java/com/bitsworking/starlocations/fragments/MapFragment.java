@@ -354,7 +354,7 @@ public class MapFragment extends Fragment {
 
         tag.mapMarker = mMap.addMarker(markerOptions);
         markerLocationTags.put(tag.mapMarker.getId(), tag);
-        ((MainActivity) getActivity()).addTempLocationTag(tag, false);
+        ((MainActivity) getActivity()).addTempLocationTag(tag);
 
         if (showInfoWindow) {
             tag.mapMarker.showInfoWindow();

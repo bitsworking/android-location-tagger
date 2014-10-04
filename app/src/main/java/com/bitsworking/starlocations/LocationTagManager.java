@@ -15,7 +15,7 @@ import java.util.Collection;
 public class LocationTagManager {
     private LocationTagDatabase mLocationTagDatabase;
 
-    private Collection<LocationTag> mTempLocationTags = new ArrayList<LocationTag>();
+    private ArrayList<LocationTag> mTempLocationTags = new ArrayList<LocationTag>();
 
     public LocationTagManager(Context context) {
         mLocationTagDatabase = new LocationTagDatabase(context);
@@ -26,7 +26,7 @@ public class LocationTagManager {
         return mLocationTagDatabase;
     }
 
-    public Collection<LocationTag> getTempLocationTags() {
+    public ArrayList<LocationTag> getTempLocationTags() {
         return mTempLocationTags;
     }
 

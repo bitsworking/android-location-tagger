@@ -37,6 +37,7 @@ import com.bitsworking.starlocations.fragments.InfoFragment;
 import com.bitsworking.starlocations.fragments.ListFragment;
 import com.bitsworking.starlocations.fragments.MapFragment;
 import com.bitsworking.starlocations.fragments.NavigationDrawerFragment;
+import com.bitsworking.starlocations.fragments.SettingsFragment;
 import com.bitsworking.starlocations.jsondb.LocationTagDatabase;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -49,6 +50,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -126,6 +128,7 @@ public class MainActivity extends Activity
 //                "1030 Wien\n" +
 //                "48.31013627,15.790834687\n" +
 //                "https://www.google.com/maps/preview?q=Rasumofskygasse+28,+1030+Wien&ftid=0x476d076dec808089:0xaea718f50b73857c&hl=en&gl=us\n" +
+//                "https://www.google.com/maps/preview?q=Marxergasse+24+Vienna\n" +
 //                "http://goo.gl/maps/kv4wL");
     }
 
@@ -205,6 +208,10 @@ public class MainActivity extends Activity
         } else {
             super.onBackPressed();
         }
+    }
+
+    public void setFragment(int fragmentId) {
+        mNavigationDrawerFragment.selectItem(fragmentId);
     }
 
     @Override
@@ -473,13 +480,21 @@ public class MainActivity extends Activity
                 }
 
                 final LocationTag tag = new LocationTag(coords, query, address);
-                addTempLocationTag(tag, true);
+                addTempLocationTag(tag);
+                showTagOnMapIfSetup(tag);
             }
         };
         thread.start();
 
         // Show Map Fragment
-        mNavigationDrawerFragment.selectItem(FRAGMENT_MAP);
+        if (fragment_attached != FRAGMENT_MAP) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mNavigationDrawerFragment.selectItem(FRAGMENT_MAP);
+                }
+            });
+        }
     }
 
     public void askToDeleteTag(final LocationTag tag) {
@@ -559,20 +574,33 @@ public class MainActivity extends Activity
         return mLocationTagManager.getDatabase().contains(tag.uid);
     }
 
-    // Returns all saved and unsaved location tags
-    public Collection<LocationTag> getAllLocationTags() {
-        // get saved tags
-        Collection<LocationTag> collection = mLocationTagManager.getDatabase().getAll();
-
-        // get unsaved tags
-        collection.addAll(mLocationTagManager.getTempLocationTags());
-        return collection;
+    public void backupDatabase() {
+        // TODO
     }
 
-    public void addTempLocationTag(final LocationTag tag, boolean showOnMapIfSetup) {
+    public void restoreDatabase() {
+        // TODO
+    }
+
+    // Returns all saved and unsaved location tags
+    public ArrayList<LocationTag> getAllLocationTags() {
+        // get saved tags
+        ArrayList<LocationTag> tags = new ArrayList<LocationTag>();
+
+        tags.addAll(mLocationTagManager.getDatabase().getAll());
+        tags.addAll(mLocationTagManager.getTempLocationTags());
+
+        // get unsaved tags
+        return tags;
+    }
+
+    public void addTempLocationTag(final LocationTag tag) {
+//        Log.v(TAG, "XX addTempLocationTag: " + tag);
         mLocationTagManager.addTempLocationTag(tag);
 
-        if (showOnMapIfSetup && mMapFragment.isMapsSetup) {
+    }
+    public void showTagOnMapIfSetup(final LocationTag tag) {
+        if (mMapFragment.isMapsSetup) {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -596,15 +624,14 @@ public class MainActivity extends Activity
     }
 
     private void parseLocationsFromText(String text) {
-//        ProgressDialog progressDialog = ProgressDialog.show(this, null, "Searching location 2...");
-//        progressDialog.setCancelable(true);
+        Log.v(TAG, "XX parseLocationsFromText: " + text);
 
         // 1. GPS Coordinates
         Pattern pattern = Pattern.compile("([0-9]+[.][0-9]+[ ,]+[0-9]+[.][0-9]+)");
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
             String gpsString = matcher.group(1);
-            Log.v(TAG, "Found gps coords: " + gpsString);
+            Log.v(TAG, "XX Found gps coords: " + gpsString);
 
             String[] parts = gpsString.split(",");
             final LatLng coords = new LatLng(
@@ -612,15 +639,19 @@ public class MainActivity extends Activity
                     Double.valueOf(parts[1].trim())
             );
 
-            addTempLocationTag(new LocationTag(coords), true);
+            LocationTag tag = new LocationTag(coords);
+            addTempLocationTag(tag);
+            showTagOnMapIfSetup(tag);
         }
 
         // 2. google maps links
-        pattern = Pattern.compile("google.com/maps.*q=([^& \n]*)");
+        // eg. http://maps.google.com/?q=Rasumofskygasse+28%2C+1030+Wien&ftid=0x476d076dec808089:0xaea718f50b73857c&hl=en&gl=us
+        // or: https://www.google.com/maps/preview?q=Marxergasse+24+Vienna
+        pattern = Pattern.compile("(google.com/maps|maps.google.com).*q=([^& \n]*)");
         matcher = pattern.matcher(text);
         while (matcher.find()) {
-            String query = matcher.group(1);
-            Log.v(TAG, "Found google maps query: " + query);
+            String query = matcher.group(2);
+            Log.v(TAG, "XX Found google maps query: " + query);
             handleSearch(query, false);
         }
 
@@ -628,54 +659,31 @@ public class MainActivity extends Activity
         pattern = Pattern.compile("goo[.]gl/maps/([a-zA-Z0-9]*)");
         matcher = pattern.matcher(text);
         while (matcher.find()) {
-            String url = "https://goo.gl/maps/" + matcher.group(1);
-            Log.v(TAG, "Found goo.gl shortcut X: " + url);
-//            addTempLocationTag(new LocationTag(new LatLng(48.31013627, 15.790834687)), true);
+            final String url = "https://goo.gl/maps/" + matcher.group(1);
+            Log.v(TAG, "XX Found goo.gl shortcut: " + url);
+
+            // Resolve url redirect in a thread, and search the redirect location
+            Thread thread = new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        Log.v(TAG, "XX: url=" + url);
+                        URL testUrl = new URL(url);
+                        URLConnection connection = testUrl.openConnection();
+                        String redirect = connection.getHeaderField("Location");
+                        Log.v(TAG, "XX: redirect=" + redirect);
+                        parseLocationsFromText(redirect);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+            thread.start();
         }
     }
 
     private void parseLocationsFromDataUri(Uri data) {
         // TODO (geo:lat,lng?q=lat,lng
-    }
-
-    public static class SettingsFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
-            // Load the preferences from an XML resource
-            addPreferencesFromResource(R.xml.preferences);
-
-            // DB: Show
-            ((Preference) findPreference("pref_key_db_show")).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    ((MainActivity) getActivity()).mNavigationDrawerFragment.selectItem(FRAGMENT_DBVIEWER);
-                    return false;
-                }
-            });
-
-            // DB: Delete
-            ((Preference) findPreference("pref_key_db_delete")).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    ((MainActivity) getActivity()).askToDeleteDatabase();
-                    return false;
-                }
-            });
-
-            // Search: Clear autocomplete
-            ((Preference) findPreference("pref_key_search_clear_autocomplete")).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    SearchRecentSuggestions suggestions = new SearchRecentSuggestions(getActivity(),
-                            MySearchRecentSuggestionsProvider.AUTHORITY, MySearchRecentSuggestionsProvider.MODE);
-                    suggestions.clearHistory();
-                    Toast.makeText(getActivity(), "Search history cleared", Toast.LENGTH_LONG).show();
-                    return false;
-                }
-            });
-        }
     }
 
     public static class DBViewerFragment extends Fragment {
